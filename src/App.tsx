@@ -573,7 +573,15 @@ export default function App() {
     setIsGenerating(true);
     try {
       const { GoogleGenAI } = await import("@google/genai");
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+      const apiKey = process.env.GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY || '';
+      
+      if (!apiKey) {
+        showToast("Gemini API Key পাওয়া যায়নি! Netlify-তে API Key সেট করুন।", "error");
+        setIsGenerating(false);
+        return;
+      }
+
+      const ai = new GoogleGenAI({ apiKey: apiKey });
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
         contents: {
@@ -589,15 +597,39 @@ export default function App() {
           
           // Save to DB if logged in
           if (user) {
-            await addDoc(collection(db, 'wallpapers'), {
-              title: `AI: ${prompt.substring(0, 20)}...`,
-              url: imageUrl,
-              category: 'এআই দ্বারা তৈরি',
-              isPremium: true,
-              authorId: user.uid,
-              authorName: user.displayName || 'এআই শিল্পী',
-              createdAt: serverTimestamp()
-            });
+            try {
+              const imgbbApiKey = import.meta.env.VITE_IMGBB_API_KEY?.trim();
+              let finalImageUrl = imageUrl;
+              
+              if (imgbbApiKey) {
+                const formData = new FormData();
+                formData.append('image', base64Data);
+                const uploadRes = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbApiKey}`, {
+                  method: 'POST',
+                  body: formData,
+                });
+                const uploadData = await uploadRes.json();
+                if (uploadData.success) {
+                  finalImageUrl = uploadData.data.url;
+                }
+              }
+
+              // Only save if it's a valid http/https URL to satisfy Firestore rules
+              if (finalImageUrl.startsWith('http')) {
+                await addDoc(collection(db, 'wallpapers'), {
+                  title: `AI: ${prompt.substring(0, 20)}...`,
+                  url: finalImageUrl,
+                  category: 'এআই দ্বারা তৈরি',
+                  isPremium: true,
+                  authorId: user.uid,
+                  authorName: user.displayName || 'এআই শিল্পী',
+                  createdAt: serverTimestamp()
+                });
+              }
+            } catch (dbError) {
+              console.error("Failed to save AI wallpaper to DB:", dbError);
+              // Don't throw here, we still want to show the generated image
+            }
           }
           
           showToast("এআই ওয়ালপেপার সফলভাবে তৈরি হয়েছে!", "success");
@@ -606,7 +638,8 @@ export default function App() {
       }
     } catch (error) {
       console.error("Generation failed:", error);
-      showToast("তৈরি করতে ব্যর্থ হয়েছে। আবার চেষ্টা করুন।", "error");
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      showToast(`তৈরি করতে ব্যর্থ হয়েছে: ${errorMessage}`, "error");
     } finally {
       setIsGenerating(false);
     }
