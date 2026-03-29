@@ -76,7 +76,22 @@ interface Toast {
   type: 'success' | 'error' | 'info';
 }
 
-const GoogleAd = ({ type = 'banner', className = '' }: { type?: 'banner' | 'in-feed' | 'sidebar', className?: string }) => null;
+const GoogleAd = ({ type = 'banner', className = '' }: { type?: 'banner' | 'in-feed' | 'sidebar', className?: string }) => {
+  return (
+    <div className={`w-full bg-[#1A1A1A] border border-white/10 rounded-2xl flex flex-col items-center justify-center p-4 relative overflow-hidden ${
+      type === 'banner' ? 'h-32' : type === 'sidebar' ? 'h-64' : 'h-48'
+    } ${className}`}>
+      <div className="absolute top-2 left-2 bg-black/50 px-2 py-1 rounded text-[10px] text-gray-400 uppercase tracking-wider">
+        Advertisement
+      </div>
+      <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center mb-3">
+        <span className="text-gray-500 font-bold text-xl">$</span>
+      </div>
+      <p className="text-gray-400 font-medium">Google AdSense Space</p>
+      <p className="text-gray-600 text-xs mt-2 text-center">আপনার অ্যাডসেন্স অ্যাপ্রুভ হওয়ার পর এখানে আসল বিজ্ঞাপন দেখাবে</p>
+    </div>
+  );
+};
 
 export default function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
