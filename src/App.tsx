@@ -638,8 +638,17 @@ export default function App() {
       }
     } catch (error) {
       console.error("Generation failed:", error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      showToast(`তৈরি করতে ব্যর্থ হয়েছে: ${errorMessage}`, "error");
+      const errorStr = error instanceof Error ? error.message : String(error);
+      let userFriendlyMessage = "অজানা ত্রুটি হয়েছে।";
+      
+      if (errorStr.includes("429") || errorStr.includes("RESOURCE_EXHAUSTED") || errorStr.includes("quota")) {
+        userFriendlyMessage = "আপনার ফ্রি API কোটা (লিমিট) শেষ হয়ে গেছে! কিছুক্ষণ পর বা আগামীকাল আবার চেষ্টা করুন।";
+      } else {
+        // Show a shorter version of the error if it's not a quota issue
+        userFriendlyMessage = errorStr.length > 100 ? errorStr.substring(0, 100) + "..." : errorStr;
+      }
+      
+      showToast(userFriendlyMessage, "error");
     } finally {
       setIsGenerating(false);
     }
