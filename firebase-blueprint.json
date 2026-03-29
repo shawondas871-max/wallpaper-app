@@ -1,0 +1,97 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Information about the user, including their account status and coins.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique ID of the user." },
+        "email": { "type": "string", "format": "email", "description": "The user's email address." },
+        "displayName": { "type": "string", "description": "The user's display name." },
+        "photoURL": { "type": "string", "format": "uri", "description": "The user's profile picture URL." },
+        "role": { "type": "string", "enum": ["user", "admin"], "description": "The user's role." },
+        "coins": { "type": "integer", "description": "The number of coins the user has." },
+        "isPro": { "type": "boolean", "description": "Whether the user is a Pro member." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the user account was created." }
+      },
+      "required": ["uid", "email", "role", "coins", "isPro", "createdAt"]
+    },
+    "Wallpaper": {
+      "title": "Wallpaper",
+      "description": "Metadata for a wallpaper image.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique ID of the wallpaper." },
+        "title": { "type": "string", "description": "The title of the wallpaper." },
+        "url": { "type": "string", "format": "uri", "description": "The URL of the wallpaper image." },
+        "category": { "type": "string", "description": "The category of the wallpaper." },
+        "authorUid": { "type": "string", "description": "The UID of the user who uploaded it." },
+        "authorName": { "type": "string", "description": "The name of the author." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the wallpaper was uploaded." },
+        "downloads": { "type": "integer", "description": "Number of downloads." },
+        "likes": { "type": "integer", "description": "Number of likes." }
+      },
+      "required": ["id", "title", "url", "category", "authorUid", "createdAt"]
+    },
+    "Ringtone": {
+      "title": "Ringtone",
+      "description": "Metadata for a ringtone audio file.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique ID of the ringtone." },
+        "title": { "type": "string", "description": "The title of the ringtone." },
+        "url": { "type": "string", "format": "uri", "description": "The URL of the ringtone audio file." },
+        "authorUid": { "type": "string", "description": "The UID of the user who uploaded it." },
+        "authorName": { "type": "string", "description": "The name of the author." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the ringtone was uploaded." },
+        "downloads": { "type": "integer", "description": "Number of downloads." },
+        "likes": { "type": "integer", "description": "Number of likes." }
+      },
+      "required": ["id", "title", "url", "authorUid", "createdAt"]
+    },
+    "Favorite": {
+      "title": "Favorite",
+      "description": "A user's favorite content.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique ID of the favorite entry." },
+        "userId": { "type": "string", "description": "The UID of the user." },
+        "contentId": { "type": "string", "description": "The ID of the content (wallpaper or ringtone)." },
+        "contentType": { "type": "string", "enum": ["wallpaper", "ringtone"], "description": "The type of content." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When it was favorited." }
+      },
+      "required": ["id", "userId", "contentId", "contentType", "createdAt"]
+    },
+    "AppMetadata": {
+      "title": "App Metadata",
+      "description": "System-level metadata for the application.",
+      "type": "object",
+      "properties": {
+        "lastAutoUpdate": { "type": "string", "format": "date-time", "description": "The last time auto-update was performed." }
+      },
+      "required": ["lastAutoUpdate"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile documents."
+    },
+    "/wallpapers/{wallpaperId}": {
+      "schema": "Wallpaper",
+      "description": "Wallpaper metadata documents."
+    },
+    "/ringtones/{ringtoneId}": {
+      "schema": "Ringtone",
+      "description": "Ringtone metadata documents."
+    },
+    "/users/{userId}/favorites/{favoriteId}": {
+      "schema": "Favorite",
+      "description": "User's favorite wallpapers and ringtones."
+    },
+    "/system/metadata": {
+      "schema": "AppMetadata",
+      "description": "System-wide metadata."
+    }
+  }
+}

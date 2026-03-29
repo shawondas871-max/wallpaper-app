@@ -1,0 +1,22 @@
+{
+  "name": "VibeWall - AI 4K Wallpapers & Ringtones",
+  "short_name": "VibeWall",
+  "description": "VibeWall: আপনার ফোনের জন্য সেরা ৪কে এআই-জেনারেটেড ওয়ালপেপার এবং রিংটোন সংগ্রহ। আজই আপনার স্ক্রিনকে দিন এক নতুন মাত্রা এবং সেরা রিংটোন উপভোগ করুন।",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0A0A0A",
+  "theme_color": "#A855F7",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/nd943894/nd943894/main/ai_4k_icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/nd943894/nd943894/main/ai_4k_icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
