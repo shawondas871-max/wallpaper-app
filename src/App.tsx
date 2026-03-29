@@ -246,27 +246,7 @@ export default function App() {
   const handleDownload = async (url: string, filename: string) => {
     showToast("ডাউনলোড শুরু হচ্ছে...", "info");
     
-    // Check if it's a mobile device to provide better fallback
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
     const downloadBlob = async (blob: Blob) => {
-      try {
-        // Try using the Web Share API for mobile devices (allows "Save Image")
-        if (isMobile && navigator.canShare && navigator.share) {
-          const file = new File([blob], filename, { type: blob.type });
-          if (navigator.canShare({ files: [file] })) {
-            await navigator.share({
-              files: [file],
-              title: filename,
-            });
-            showToast("শেয়ার মেনু থেকে 'Save' বা 'Download' নির্বাচন করুন", "success");
-            return true;
-          }
-        }
-      } catch (shareError) {
-        console.log("Share API failed or cancelled:", shareError);
-      }
-
       try {
         const blobUrl = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -276,6 +256,7 @@ export default function App() {
         link.click();
         document.body.removeChild(link);
         
+        // Delay revocation to allow mobile download managers to fetch the blob
         setTimeout(() => {
           window.URL.revokeObjectURL(blobUrl);
         }, 10000);
