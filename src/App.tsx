@@ -76,32 +76,7 @@ interface Toast {
   type: 'success' | 'error' | 'info';
 }
 
-const GoogleAd = ({ type = 'banner', className = '' }: { type?: 'banner' | 'in-feed' | 'sidebar', className?: string }) => (
-  <div className={cn(
-    "bg-gradient-to-br from-[#1A1A1A] to-[#111] border border-white/5 rounded-2xl flex flex-col items-center justify-center overflow-hidden relative group shadow-inner",
-    type === 'banner' ? "w-full h-24 md:h-32" : 
-    type === 'in-feed' ? "w-full aspect-video md:aspect-[21/9]" : 
-    "w-full h-64",
-    className
-  )}>
-    <div className="absolute top-2 left-2 bg-black/40 px-2 py-0.5 rounded text-[8px] font-bold text-gray-500 uppercase tracking-widest z-10">Sponsored</div>
-    
-    <div className="relative z-10 flex items-center gap-6 px-8">
-      <div className="w-12 h-12 md:w-16 md:h-16 bg-purple-500/10 rounded-2xl flex items-center justify-center border border-purple-500/20 shrink-0">
-        <Sparkles className="w-6 h-6 md:w-8 md:h-8 text-purple-500" />
-      </div>
-      <div>
-        <h4 className="text-sm md:text-lg font-black text-white mb-1">VibeWall Pro</h4>
-        <p className="text-[10px] md:text-xs text-gray-500 leading-tight">এক্সক্লুসিভ ৪কে ওয়ালপেপার এবং আনলিমিটেড এআই জেনারেশন পেতে প্রো মেম্বারশিপ নিন।</p>
-      </div>
-      <button className="hidden md:block bg-white text-black px-6 py-2 rounded-xl text-xs font-black hover:bg-gray-200 transition-all">বিস্তারিত</button>
-    </div>
-
-    <div className="absolute inset-0 opacity-10 pointer-events-none">
-      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(168,85,247,0.1),transparent_70%)]" />
-    </div>
-  </div>
-);
+const GoogleAd = ({ type = 'banner', className = '' }: { type?: 'banner' | 'in-feed' | 'sidebar', className?: string }) => null;
 
 export default function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
@@ -268,15 +243,73 @@ export default function App() {
     }, 3000);
   };
 
-  const handleDownload = (url: string, filename: string) => {
+  const handleDownload = async (url: string, filename: string) => {
     showToast("ডাউনলোড শুরু হচ্ছে...", "info");
-    const downloadUrl = `/api/download?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}`;
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    
+    // Check if it's a mobile device to provide better fallback
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    const downloadBlob = async (blob: Blob) => {
+      try {
+        // Try using the Web Share API for mobile devices (allows "Save Image")
+        if (isMobile && navigator.canShare && navigator.share) {
+          const file = new File([blob], filename, { type: blob.type });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: filename,
+            });
+            showToast("শেয়ার মেনু থেকে 'Save' বা 'Download' নির্বাচন করুন", "success");
+            return true;
+          }
+        }
+      } catch (shareError) {
+        console.log("Share API failed or cancelled:", shareError);
+      }
+
+      try {
+        const blobUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        setTimeout(() => {
+          window.URL.revokeObjectURL(blobUrl);
+        }, 10000);
+        
+        showToast("ডাউনলোড সফল হয়েছে!", "success");
+        return true;
+      } catch (blobError) {
+        console.error("Blob download failed:", blobError);
+        return false;
+      }
+    };
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Network response was not ok");
+      const blob = await response.blob();
+      const success = await downloadBlob(blob);
+      if (!success) throw new Error("Blob download failed");
+    } catch (error) {
+      console.error("Direct download failed, trying proxy:", error);
+      try {
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+        const proxyResponse = await fetch(proxyUrl);
+        if (!proxyResponse.ok) throw new Error("Proxy response was not ok");
+        const blob = await proxyResponse.blob();
+        const success = await downloadBlob(blob);
+        if (!success) throw new Error("Proxy blob download failed");
+      } catch (proxyError) {
+        console.error("Proxy download failed:", proxyError);
+        // Ultimate fallback: open in new tab
+        window.open(url, '_blank');
+        showToast("সরাসরি ডাউনলোড করা যায়নি, নতুন ট্যাবে খোলা হয়েছে। দয়া করে চেপে ধরে সেভ করুন।", "error");
+      }
+    }
   };
 
   const earnCoins = async () => {
@@ -430,9 +463,10 @@ export default function App() {
 
         try {
           const formData = new FormData();
-          formData.append('file', file);
+          formData.append('reqtype', 'fileupload');
+          formData.append('fileToUpload', file);
 
-          const response = await fetch('/api/upload', {
+          const response = await fetch('https://catbox.moe/user/api.php', {
             method: 'POST',
             body: formData
           });
@@ -444,8 +478,7 @@ export default function App() {
             throw new Error("Network response was not ok");
           }
 
-          const data = await response.json();
-          const downloadURL = data.url;
+          const downloadURL = await response.text();
           
           if (!downloadURL || !downloadURL.startsWith('http')) {
             throw new Error(downloadURL || "Invalid URL returned");
@@ -655,8 +688,11 @@ export default function App() {
   };
 
   const shareToPinterest = (url: string, media: string, description: string) => {
-    const pinterestUrl = `https://www.pinterest.com/pin/create/button/?url=${encodeURIComponent(url)}&media=${encodeURIComponent(media)}&description=${encodeURIComponent(description)}`;
-    window.open(pinterestUrl, '_blank');
+    // For Pinterest, we want to share the actual image URL as the media
+    // and the website URL as the link back
+    const siteUrl = window.location.origin;
+    const pinterestUrl = `https://www.pinterest.com/pin/create/button/?url=${encodeURIComponent(siteUrl)}&media=${encodeURIComponent(media)}&description=${encodeURIComponent(description)}`;
+    window.open(pinterestUrl, '_blank', 'width=600,height=600');
   };
 
   const toggleRingtone = (id: string, url?: string) => {
@@ -918,10 +954,10 @@ export default function App() {
                     ডাউনলোড
                   </button>
                   <button 
-                    onClick={() => showToast("ওয়ালপেপার সফলভাবে সেট করা হয়েছে!", "success")}
+                    onClick={() => handleDownload(generatedImage || '', 'generated-wallpaper.jpg')}
                     className="flex-1 bg-white/10 backdrop-blur-md py-4 rounded-2xl font-bold border border-white/10"
                   >
-                    ওয়ালপেপার সেট করুন
+                    ডাউনলোড করে সেট করুন
                   </button>
                 </div>
               </motion.div>
@@ -1920,18 +1956,17 @@ export default function App() {
             </button>
 
             <div className="absolute bottom-10 left-6 right-6">
-              <GoogleAd type="banner" className="mb-6 bg-black/40 backdrop-blur-md border-white/10" />
               <h2 className="text-3xl font-bold mb-2">{selectedWallpaper.title}</h2>
               <p className="text-gray-300 mb-8">{selectedWallpaper.category} সংগ্রহ</p>
               
             <div className="flex gap-4">
               {(!selectedWallpaper.isPremium || unlockedItems.includes(selectedWallpaper.id)) ? (
                 <button 
-                  onClick={() => showToast("ওয়ালপেপার সেট করা হয়েছে!", "success")}
+                  onClick={() => handleDownload(selectedWallpaper.url, `${selectedWallpaper.title}.jpg`)}
                   className="flex-1 bg-white text-black py-4 rounded-2xl font-bold flex items-center justify-center gap-2"
                 >
                   <Zap className="w-5 h-5" />
-                  ওয়ালপেপার সেট করুন
+                  ডাউনলোড করে সেট করুন
                 </button>
               ) : (
                 <button 
