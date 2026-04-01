@@ -600,84 +600,47 @@ export default function App() {
   const generateAIWallpaper = async () => {
     if (!prompt) return;
     setIsGenerating(true);
+    
     try {
-      const { GoogleGenAI } = await import("@google/genai");
-      const apiKey = process.env.GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY || '';
+      showToast("এআই ম্যাজিক তৈরি হচ্ছে, একটু অপেক্ষা করুন...", "info");
       
-      if (!apiKey) {
-        showToast("Gemini API Key পাওয়া যায়নি! Netlify-তে API Key সেট করুন।", "error");
-        setIsGenerating(false);
-        return;
-      }
-
-      const ai = new GoogleGenAI({ apiKey: apiKey });
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: {
-          parts: [{ text: `A high quality mobile wallpaper of: ${prompt}. Artistic, 4k, cinematic lighting.` }],
-        },
+      // Use Pollinations AI for free, unlimited image generation
+      // This solves the 429 quota issue with Gemini API
+      const encodedPrompt = encodeURIComponent(`${prompt}, high quality mobile wallpaper, 4k, masterpiece, artistic, cinematic lighting`);
+      const randomSeed = Math.floor(Math.random() * 1000000);
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1080&height=1920&nologo=true&seed=${randomSeed}`;
+      
+      // Pre-load the image to ensure it's ready before showing
+      await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = imageUrl;
       });
 
-      for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) {
-          const base64Data = part.inlineData.data;
-          const imageUrl = `data:image/png;base64,${base64Data}`;
-          setGeneratedImage(imageUrl);
-          
-          // Save to DB if logged in
-          if (user) {
-            try {
-              const imgbbApiKey = import.meta.env.VITE_IMGBB_API_KEY?.trim();
-              let finalImageUrl = imageUrl;
-              
-              if (imgbbApiKey) {
-                const formData = new FormData();
-                formData.append('image', base64Data);
-                const uploadRes = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbApiKey}`, {
-                  method: 'POST',
-                  body: formData,
-                });
-                const uploadData = await uploadRes.json();
-                if (uploadData.success) {
-                  finalImageUrl = uploadData.data.url;
-                }
-              }
-
-              // Only save if it's a valid http/https URL to satisfy Firestore rules
-              if (finalImageUrl.startsWith('http')) {
-                await addDoc(collection(db, 'wallpapers'), {
-                  title: `AI: ${prompt.substring(0, 20)}...`,
-                  url: finalImageUrl,
-                  category: 'এআই দ্বারা তৈরি',
-                  isPremium: true,
-                  authorId: user.uid,
-                  authorName: user.displayName || 'এআই শিল্পী',
-                  createdAt: serverTimestamp()
-                });
-              }
-            } catch (dbError) {
-              console.error("Failed to save AI wallpaper to DB:", dbError);
-              // Don't throw here, we still want to show the generated image
-            }
-          }
-          
-          showToast("এআই ওয়ালপেপার সফলভাবে তৈরি হয়েছে!", "success");
-          break;
+      setGeneratedImage(imageUrl);
+      
+      // Save to DB if logged in
+      if (user) {
+        try {
+          await addDoc(collection(db, 'wallpapers'), {
+            title: `AI: ${prompt.substring(0, 20)}...`,
+            url: imageUrl,
+            category: 'এআই দ্বারা তৈরি',
+            isPremium: true,
+            authorId: user.uid,
+            authorName: user.displayName || 'এআই শিল্পী',
+            createdAt: serverTimestamp()
+          });
+        } catch (dbError) {
+          console.error("Failed to save AI wallpaper to DB:", dbError);
         }
       }
+      
+      showToast("এআই ওয়ালপেপার সফলভাবে তৈরি হয়েছে!", "success");
     } catch (error) {
       console.error("Generation failed:", error);
-      const errorStr = error instanceof Error ? error.message : String(error);
-      let userFriendlyMessage = "অজানা ত্রুটি হয়েছে।";
-      
-      if (errorStr.includes("429") || errorStr.includes("RESOURCE_EXHAUSTED") || errorStr.includes("quota")) {
-        userFriendlyMessage = "আপনার ফ্রি API কোটা (লিমিট) শেষ হয়ে গেছে! কিছুক্ষণ পর বা আগামীকাল আবার চেষ্টা করুন।";
-      } else {
-        // Show a shorter version of the error if it's not a quota issue
-        userFriendlyMessage = errorStr.length > 100 ? errorStr.substring(0, 100) + "..." : errorStr;
-      }
-      
-      showToast(userFriendlyMessage, "error");
+      showToast("দুঃখিত, ছবি তৈরি করা সম্ভব হয়নি। আবার চেষ্টা করুন।", "error");
     } finally {
       setIsGenerating(false);
     }
