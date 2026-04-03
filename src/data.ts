@@ -57,6 +57,15 @@ export interface Ringtone {
   count?: number; // For trending sort
 }
 
+export interface WallpaperPack {
+  id: string;
+  title: string;
+  description: string;
+  coverUrl: string;
+  count: number;
+  isPremium: boolean;
+}
+
 export const MOCK_WALLPAPERS: Wallpaper[] = [
   { id: '1', title: 'ছোট্ট দুষ্টু পোষা প্রাণী', url: 'https://picsum.photos/seed/cat/400/600', category: 'ফিচার্ড', type: 'static', tags: ['Cute', 'Animal', 'Pet'], views: 1200, likes: 450, downloads: 300 },
   { id: '2', title: 'সপ্তাহের সেরা শিল্পী', url: 'https://picsum.photos/seed/art/400/600', category: 'ফিচার্ড', type: 'static', tags: ['Art', 'Creative', 'Design'], views: 3400, likes: 1200, downloads: 800 },
@@ -93,4 +102,31 @@ export const MOCK_RINGTONES: Ringtone[] = [
   { id: 'r6', title: 'বজ্রপাত', duration: '0:35', category: 'প্রকৃতি', isPremium: true, url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3', tags: ['Nature', 'Thunder', 'Rain'], views: 4100, downloads: 1800, count: 5900 },
   { id: 'r7', title: 'রেট্রো আর্কেড', duration: '0:18', category: 'গেমিং', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3', tags: ['Gaming', 'Retro', '8-bit'], views: 1200, downloads: 300, count: 1500 },
   { id: 'r8', title: 'লো-ফাই চিল', duration: '0:28', category: 'লো-ফাই', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3', tags: ['Lo-Fi', 'Chill', 'Study'], views: 2800, downloads: 900, count: 3700 },
+];
+
+export const MOCK_PACKS: WallpaperPack[] = [
+  { 
+    id: 'p1', 
+    title: '50+ HD 4K AI PACK', 
+    description: 'প্রিমিয়াম এআই জেনারেটেড ৪কে ওয়ালপেপার প্যাক। নিয়ন আর্ট এবং ফিউচারিস্টিক ডিজাইন।', 
+    coverUrl: 'https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=800&auto=format&fit=crop&q=80', 
+    count: 52,
+    isPremium: true
+  },
+  { 
+    id: 'p2', 
+    title: 'NATURE SERENITY PACK', 
+    description: 'প্রকৃতির শান্ত এবং মনোরম দৃশ্যের সেরা সংগ্রহ।', 
+    coverUrl: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&auto=format&fit=crop&q=80', 
+    count: 35,
+    isPremium: false
+  },
+  { 
+    id: 'p3', 
+    title: 'MINIMAL DARK PACK', 
+    description: 'অ্যামোলেড ডিসপ্লের জন্য সেরা মিনিমালিস্ট ডার্ক ওয়ালপেপার।', 
+    coverUrl: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=800&auto=format&fit=crop&q=80', 
+    count: 28,
+    isPremium: true
+  }
 ];

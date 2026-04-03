@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
-import { MOCK_WALLPAPERS, MOCK_COLLECTIONS, MOCK_RINGTONES, Wallpaper, Ringtone, UserProfile, Favorite } from './data';
+import { MOCK_WALLPAPERS, MOCK_COLLECTIONS, MOCK_RINGTONES, MOCK_PACKS, Wallpaper, Ringtone, UserProfile, Favorite, WallpaperPack } from './data';
 import { 
   auth, 
   db, 
@@ -1311,9 +1311,9 @@ export default function App() {
           <div className="bg-[#1A1A1A] rounded-3xl p-8 border border-white/5">
             <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
               <Zap className="w-5 h-5 text-purple-500" />
-              অটো আপডেট সিস্টেম
+              ওয়ালপেপার আপডেট সিস্টেম
             </h3>
-            <p className="text-gray-400 mb-6">প্রতিদিন ১০টি নতুন হাই-কোয়ালিটি ওয়ালপেপার অটোমেটিকভাবে ওয়েবসাইটে যুক্ত করতে নিচের বাটনে ক্লিক করুন।</p>
+            <p className="text-gray-400 mb-6">প্রতিদিন ১০টি নতুন হাই-কোয়ালিটি ওয়ালপেপার ওয়েবসাইটে যুক্ত করতে নিচের বাটনে ক্লিক করুন।</p>
             <button
               onClick={syncDailyWallpapers}
               className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 rounded-xl font-bold flex items-center gap-3 transition-all shadow-lg shadow-purple-500/20"
@@ -1326,9 +1326,9 @@ export default function App() {
           <div className="bg-[#1A1A1A] rounded-3xl p-8 border border-white/5">
             <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
               <Music className="w-5 h-5 text-purple-500" />
-              অটো রিংটোন আপডেট সিস্টেম
+              রিংটোন আপডেট সিস্টেম
             </h3>
-            <p className="text-gray-400 mb-6">প্রতিদিন ৫টি নতুন রিংটোন অটোমেটিকভাবে ওয়েবসাইটে যুক্ত করতে নিচের বাটনে ক্লিক করুন।</p>
+            <p className="text-gray-400 mb-6">প্রতিদিন ৫টি নতুন রিংটোন ওয়েবসাইটে যুক্ত করতে নিচের বাটনে ক্লিক করুন।</p>
             <button
               onClick={syncDailyRingtones}
               className="bg-white/10 hover:bg-white/20 text-white px-8 py-4 rounded-xl font-bold flex items-center gap-3 transition-all"
@@ -1509,6 +1509,14 @@ export default function App() {
             creatorStats[w.authorId].score += (w.likes || 0) * 2 + (w.downloads || 0) * 5 + (w.views || 0);
           }
         });
+
+        if (Object.keys(creatorStats).length === 0) {
+          creatorStats['m1'] = { name: 'VibeMaster', photo: '', score: 15420, uploads: 45 };
+          creatorStats['m2'] = { name: 'PixelArt', photo: '', score: 12150, uploads: 32 };
+          creatorStats['m3'] = { name: 'NeonDream', photo: '', score: 9800, uploads: 28 };
+          creatorStats['m4'] = { name: 'SkyWalker', photo: '', score: 7500, uploads: 15 };
+          creatorStats['m5'] = { name: 'NatureLover', photo: '', score: 5200, uploads: 12 };
+        }
 
         const topCreators = Object.values(creatorStats).sort((a, b) => b.score - a.score).slice(0, 10);
 
@@ -1819,45 +1827,141 @@ export default function App() {
           <GoogleAd type="banner" />
         </div>
 
-        {/* Hero Section - More Compact */}
-        <section className="relative h-[300px] md:h-[450px] flex items-center justify-center overflow-hidden mb-12 rounded-[40px] mt-6 shadow-2xl mx-4 md:mx-8">
+        {/* Hero Section - Premium Banner Style */}
+        <section className="relative h-[400px] md:h-[600px] flex items-center justify-center overflow-hidden mb-12 rounded-[40px] mt-6 shadow-2xl mx-4 md:mx-8 group">
           <div className="absolute inset-0 z-0">
             <img 
-              src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1600&auto=format&fit=crop&q=80" 
-              className="w-full h-full object-cover opacity-40"
-              alt="হিরো ব্যাকগ্রাউন্ড"
+              src="https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=1600&auto=format&fit=crop&q=80" 
+              className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+              alt="Premium AI Wallpapers Banner"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0A0A0A]/50 to-[#0A0A0A]" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-purple-900/20 mix-blend-overlay" />
           </div>
           
-          <div className="relative z-10 text-center px-4 max-w-4xl">
+          <div className="relative z-10 text-center px-4 max-w-5xl">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="inline-block px-6 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 mb-8"
+            >
+              <span className="text-sm font-black tracking-[0.2em] uppercase text-purple-300">Premium AI Wallpapers</span>
+            </motion.div>
+            
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-4xl md:text-6xl font-black mb-6 tracking-tight leading-tight"
+              className="text-5xl md:text-8xl font-black mb-8 tracking-tighter leading-none"
             >
-              আপনার স্ক্রিনকে দিন <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500">এক নতুন মাত্রা</span>
+              50+ HD 4K <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-yellow-500">MOBILE PACK</span>
             </motion.h1>
+            
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
+              className="flex flex-wrap items-center justify-center gap-4 md:gap-8 mb-10"
+            >
+              <div className="flex items-center gap-2 text-white/80 font-bold">
+                <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+                Ultra HD (4K Quality)
+              </div>
+              <div className="flex items-center gap-2 text-white/80 font-bold">
+                <div className="w-2 h-2 rounded-full bg-pink-500 animate-pulse" />
+                Unique AI Designs
+              </div>
+              <div className="flex items-center gap-2 text-white/80 font-bold">
+                <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
+                Neon Art
+              </div>
+            </motion.div>
+
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
               className="flex flex-wrap items-center justify-center gap-4"
             >
               <button 
-                onClick={() => setSelectedCategory('এক্সক্লুসিভ')}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-full font-black text-sm transition-all transform hover:scale-105 shadow-xl shadow-purple-500/20"
+                onClick={() => {
+                  const el = document.getElementById('exclusive-packs');
+                  el?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="bg-white text-black px-10 py-4 rounded-full font-black text-lg transition-all transform hover:scale-105 shadow-2xl shadow-white/20 flex items-center gap-3"
               >
-                এক্সক্লুসিভ
+                <Download className="w-6 h-6" />
+                Instant Download
               </button>
               <button 
                 onClick={() => setActiveTab('এআই জেনারেটর')}
-                className="bg-white/10 hover:bg-white/20 backdrop-blur-md text-white px-8 py-3 rounded-full font-black text-sm transition-all border border-white/10"
+                className="bg-white/10 hover:bg-white/20 backdrop-blur-md text-white px-10 py-4 rounded-full font-black text-lg transition-all border border-white/20 flex items-center gap-3"
               >
+                <Zap className="w-6 h-6" />
                 এআই জেনারেটর
               </button>
             </motion.div>
+          </div>
+        </section>
+
+        {/* Exclusive Packs Section */}
+        <section id="exclusive-packs" className="max-w-7xl mx-auto px-4 md:px-8 mb-16">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-3xl font-black text-white mb-2 tracking-tight">এক্সক্লুসিভ প্যাক</h2>
+              <p className="text-gray-400">সেরা ৪কে ওয়ালপেপার কালেকশন এক সাথে ডাউনলোড করুন</p>
+            </div>
+            <button className="text-purple-400 text-sm font-bold hover:underline flex items-center gap-1">
+              সব দেখুন <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {MOCK_PACKS.map((pack, index) => (
+              <motion.div
+                key={pack.id}
+                whileHover={{ y: -10 }}
+                className="group relative h-[350px] rounded-[40px] overflow-hidden border border-white/5 cursor-pointer shadow-2xl shadow-black"
+              >
+                <img 
+                  src={pack.coverUrl} 
+                  alt={pack.title}
+                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/40 to-transparent" />
+                <div className="absolute inset-0 bg-purple-500/0 group-hover:bg-purple-500/10 transition-colors duration-500" />
+                
+                <div className="absolute top-6 left-6 right-6 flex justify-between items-start">
+                  {index === 0 && (
+                    <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-[10px] font-black px-4 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg animate-pulse">
+                      <Zap className="w-3 h-3 fill-current" /> TRENDING PACK
+                    </div>
+                  )}
+                  {pack.isPremium && (
+                    <div className="bg-yellow-500 text-black text-[10px] font-black px-4 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg ml-auto">
+                      <Lock className="w-3 h-3" /> PREMIUM
+                    </div>
+                  )}
+                </div>
+                
+                <div className="absolute bottom-8 left-8 right-8">
+                  <div className="flex items-center gap-2 text-purple-400 text-xs font-black mb-3 uppercase tracking-widest">
+                    <ImageIcon className="w-4 h-4" /> {pack.count} ওয়ালপেপার
+                  </div>
+                  <h3 className="text-2xl font-black text-white mb-3 leading-tight">{pack.title}</h3>
+                  <p className="text-gray-400 text-sm line-clamp-2 mb-6 font-medium">{pack.description}</p>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDownload(pack.coverUrl, `${pack.title}.jpg`);
+                    }}
+                    className="w-full py-4 bg-white text-black rounded-2xl text-sm font-black hover:bg-purple-500 hover:text-white transition-all shadow-xl shadow-white/5"
+                  >
+                    ডাউনলোড করুন
+                  </button>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </section>
 
@@ -2369,6 +2473,7 @@ export default function App() {
                       {tab === 'ওয়ালপেপার' && <ImageIcon className="w-5 h-5" />}
                       {tab === 'এআই জেনারেটর' && <Sparkles className="w-5 h-5" />}
                       {tab === 'রিংটোন' && <Music className="w-5 h-5" />}
+                      {tab === 'টপ ক্রিয়েটর' && <Star className="w-5 h-5" />}
                       {tab === 'আমার ভাইব' && <UserIcon className="w-5 h-5" />}
                       {tab === 'অ্যাডমিন' && <Settings className="w-5 h-5" />}
                       {tab}
@@ -2848,6 +2953,7 @@ export default function App() {
           const Icon = tab === 'ওয়ালপেপার' ? ImageIcon : 
                        tab === 'এআই জেনারেটর' ? Sparkles : 
                        tab === 'রিংটোন' ? Music : 
+                       tab === 'টপ ক্রিয়েটর' ? Star :
                        tab === 'অ্যাডমিন' ? Settings : UserIcon;
           return (
             <button
