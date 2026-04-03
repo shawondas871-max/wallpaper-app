@@ -137,7 +137,7 @@ const WallpaperCard = ({ w, setSelectedWallpaper, toggleFavorite, favorites, han
         </div>
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
-        <p className="text-sm font-bold">{w.title}</p>
+        <p className="text-sm font-bold">{w.title.replace(/অটোমেটিক|অটো|Auto/g, '').trim() || 'VibeWall ওয়ালপেপার'}</p>
       </div>
       <div className="absolute top-3 left-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
         <button 
@@ -150,7 +150,7 @@ const WallpaperCard = ({ w, setSelectedWallpaper, toggleFavorite, favorites, han
           <Heart className={cn("w-4 h-4", favorites.some((f: any) => f.itemId === w.id) && "fill-current")} />
         </button>
         <button 
-          onClick={(e) => { e.stopPropagation(); handleShare && handleShare(`VibeWall ওয়ালপেপার: ${w.title}`, "এই অসাধারণ ওয়ালপেপারটি দেখুন!", window.location.href); }}
+          onClick={(e) => { e.stopPropagation(); handleShare && handleShare(`VibeWall ওয়ালপেপার: ${w.title.replace(/অটোমেটিক|অটো|Auto/g, '').trim() || 'VibeWall ওয়ালপেপার'}`, "এই অসাধারণ ওয়ালপেপারটি দেখুন!", window.location.href); }}
           className="p-2 rounded-xl backdrop-blur-md border border-white/10 bg-black/40 text-white hover:bg-white/20 transition-all"
           title="শেয়ার করুন"
         >
@@ -160,7 +160,7 @@ const WallpaperCard = ({ w, setSelectedWallpaper, toggleFavorite, favorites, han
           onClick={(e) => { 
             e.stopPropagation(); 
             const siteUrl = window.location.origin;
-            const pinterestUrl = `https://www.pinterest.com/pin/create/button/?url=${encodeURIComponent(siteUrl)}&media=${encodeURIComponent(w.url)}&description=${encodeURIComponent(`VibeWall ওয়ালপেপার: ${w.title}`)}`;
+            const pinterestUrl = `https://www.pinterest.com/pin/create/button/?url=${encodeURIComponent(siteUrl)}&media=${encodeURIComponent(w.url)}&description=${encodeURIComponent(`VibeWall ওয়ালপেপার: ${w.title.replace(/অটোমেটিক|অটো|Auto/g, '').trim() || 'VibeWall ওয়ালপেপার'}`)}`;
             window.open(pinterestUrl, '_blank', 'width=600,height=600');
           }}
           className="p-2 rounded-xl backdrop-blur-md border border-white/10 bg-[#E60023] text-white hover:bg-[#c5001f] transition-all"
@@ -209,7 +209,7 @@ const RingtoneCard = ({ rt, playingRingtone, toggleRingtone, toggleFavorite, fav
         </button>
         <div>
           <h3 className="font-black text-xl mb-1 flex items-center gap-2">
-            {rt.title}
+            {rt.title.replace(/অটোমেটিক|অটো|Auto/g, '').trim() || 'VibeWall রিংটোন'}
             {rt.isPremium && (
               <span className="bg-yellow-500 text-black px-2 py-0.5 rounded-lg text-[10px] font-black flex items-center gap-1">
                 <Sparkles className="w-3 h-3" /> PRO
@@ -246,7 +246,7 @@ const RingtoneCard = ({ rt, playingRingtone, toggleRingtone, toggleFavorite, fav
       </div>
       <div className="flex items-center gap-3 self-end md:self-auto">
         <button 
-          onClick={() => handleShare && handleShare(`VibeWall রিংটোন: ${rt.title}`, "এই অসাধারণ রিংটোনটি শুনুন!", window.location.href)}
+          onClick={() => handleShare && handleShare(`VibeWall রিংটোন: ${rt.title.replace(/অটোমেটিক|অটো|Auto/g, '').trim() || 'VibeWall রিংটোন'}`, "এই অসাধারণ রিংটোনটি শুনুন!", window.location.href)}
           className="p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-all text-gray-400 hover:text-white"
           title="শেয়ার করুন"
         >
@@ -271,7 +271,7 @@ const RingtoneCard = ({ rt, playingRingtone, toggleRingtone, toggleFavorite, fav
           </button>
         ) : (
           <button 
-            onClick={() => handleDownload(rt.url || '', `${rt.title}.mp3`)}
+            onClick={() => handleDownload(rt.url || '', `${rt.title.replace(/অটোমেটিক|অটো|Auto/g, '').trim() || 'VibeWall রিংটোন'}.mp3`)}
             className="p-4 bg-purple-600 rounded-2xl hover:bg-purple-700 transition-all shadow-xl shadow-purple-500/20"
           >
             <Download className="w-6 h-6 text-white" />
@@ -397,8 +397,9 @@ export default function App() {
     let description = 'Download high-quality 4K, AMOLED, Nature, Anime wallpapers and trending ringtones for free.';
     
     if (selectedWallpaper) {
-      title = `${selectedWallpaper.title} - VibeWall`;
-      description = `Download ${selectedWallpaper.title} wallpaper for free. Category: ${selectedWallpaper.category}.`;
+      const cleanedTitle = selectedWallpaper.title.replace(/অটোমেটিক|অটো|Auto/g, '').trim() || 'VibeWall ওয়ালপেপার';
+      title = `${cleanedTitle} - VibeWall`;
+      description = `Download ${cleanedTitle} wallpaper for free. Category: ${selectedWallpaper.category}.`;
     } else if (selectedCategory) {
       title = `${selectedCategory} ${activeTab} - VibeWall`;
       description = `Explore the best ${selectedCategory} ${activeTab} on VibeWall.`;
@@ -1179,7 +1180,7 @@ export default function App() {
     }
 
     try {
-      showToast("অটো আপডেট শুরু হচ্ছে...", "info");
+      showToast("আপডেট শুরু হচ্ছে...", "info");
       const today = new Date().toISOString().split('T')[0];
       const metadataRef = doc(db, 'system', 'metadata');
       const metadataSnap = await getDoc(metadataRef);
@@ -1203,11 +1204,11 @@ export default function App() {
         const newDocRef = doc(collection(db, 'wallpapers'));
         await setDoc(newDocRef, {
           id: newDocRef.id,
-          title: `VibeWall কালেকশন ${img.id}`,
+          title: `ওয়ালপেপার কালেকশন ${img.id}`,
           url: `https://picsum.photos/id/${img.id}/400/600`,
           category: 'নতুন',
           authorId: user.uid,
-          authorName: 'Auto Update',
+          authorName: 'VibeWall Team',
           createdAt: serverTimestamp(),
           downloads: 0,
           likes: 0,
@@ -1221,7 +1222,7 @@ export default function App() {
       showToast("১০টি নতুন ওয়ালপেপার সফলভাবে যুক্ত হয়েছে!", "success");
     } catch (error) {
       console.error("Failed to sync daily wallpapers:", error);
-      showToast("অটো আপডেট ব্যর্থ হয়েছে", "error");
+      showToast("আপডেট ব্যর্থ হয়েছে", "error");
     }
   };
 
@@ -1232,7 +1233,7 @@ export default function App() {
     }
 
     try {
-      showToast("রিংটোন অটো আপডেট শুরু হচ্ছে...", "info");
+      showToast("রিংটোন আপডেট শুরু হচ্ছে...", "info");
       const today = new Date().toISOString().split('T')[0];
       const metadataRef = doc(db, 'system', 'metadata');
       const metadataSnap = await getDoc(metadataRef);
@@ -1272,7 +1273,7 @@ export default function App() {
           category: 'নতুন',
           duration: '0:30',
           authorId: user.uid,
-          authorName: 'Auto Update',
+          authorName: 'VibeWall Team',
           createdAt: serverTimestamp(),
           downloads: 0,
           likes: 0
@@ -1285,7 +1286,7 @@ export default function App() {
       showToast("৫টি নতুন রিংটোন সফলভাবে যুক্ত হয়েছে!", "success");
     } catch (error) {
       console.error("Failed to sync daily ringtones:", error);
-      showToast("রিংটোন অটো আপডেট ব্যর্থ হয়েছে", "error");
+      showToast("রিংটোন আপডেট ব্যর্থ হয়েছে", "error");
     }
   };
 
@@ -2617,7 +2618,7 @@ export default function App() {
               {/* Details Section */}
               <div className="w-full lg:w-1/3 p-6 lg:p-12 flex flex-col gap-8 bg-[#111]">
                 <div>
-                  <h2 className="text-4xl font-black mb-4 leading-tight">{selectedWallpaper.title}</h2>
+                  <h2 className="text-4xl font-black mb-4 leading-tight">{selectedWallpaper.title.replace(/অটোমেটিক|অটো|Auto/g, '').trim() || 'VibeWall ওয়ালপেপার'}</h2>
                   <div className="flex items-center gap-4 mb-6">
                     <span className="bg-white/10 px-4 py-2 rounded-xl text-sm font-bold text-gray-300">
                       {selectedWallpaper.category}
@@ -2659,7 +2660,7 @@ export default function App() {
                 <div className="flex flex-col gap-4 mt-auto">
                   {(!selectedWallpaper.isPremium || unlockedItems.includes(selectedWallpaper.id)) ? (
                     <button 
-                      onClick={() => handleDownload(selectedWallpaper.url, `${selectedWallpaper.title}.jpg`)}
+                      onClick={() => handleDownload(selectedWallpaper.url, `${selectedWallpaper.title.replace(/অটোমেটিক|অটো|Auto/g, '').trim() || 'VibeWall ওয়ালপেপার'}.jpg`)}
                       className="w-full bg-white text-black py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 hover:bg-gray-200 transition-all shadow-xl shadow-white/10"
                     >
                       <Download className="w-6 h-6" />
@@ -2686,7 +2687,7 @@ export default function App() {
                       <Heart className={cn("w-6 h-6", favorites.some(f => f.itemId === selectedWallpaper.id) && "fill-current")} />
                     </button>
                     <button 
-                      onClick={() => handleShare(`VibeWall ওয়ালপেপার: ${selectedWallpaper.title}`, "এই অসাধারণ ওয়ালপেপারটি দেখুন!", window.location.href)}
+                      onClick={() => handleShare(`VibeWall ওয়ালপেপার: ${selectedWallpaper.title.replace(/অটোমেটিক|অটো|Auto/g, '').trim() || 'VibeWall ওয়ালপেপার'}`, "এই অসাধারণ ওয়ালপেপারটি দেখুন!", window.location.href)}
                       className="py-4 bg-black border border-white/5 rounded-2xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/5 transition-all"
                     >
                       <Share2 className="w-6 h-6" />
@@ -2694,7 +2695,7 @@ export default function App() {
                     <button 
                       onClick={() => {
                         const siteUrl = window.location.origin;
-                        const pinterestUrl = `https://www.pinterest.com/pin/create/button/?url=${encodeURIComponent(siteUrl)}&media=${encodeURIComponent(selectedWallpaper.url)}&description=${encodeURIComponent(`VibeWall ওয়ালপেপার: ${selectedWallpaper.title}`)}`;
+                        const pinterestUrl = `https://www.pinterest.com/pin/create/button/?url=${encodeURIComponent(siteUrl)}&media=${encodeURIComponent(selectedWallpaper.url)}&description=${encodeURIComponent(`VibeWall ওয়ালপেপার: ${selectedWallpaper.title.replace(/অটোমেটিক|অটো|Auto/g, '').trim() || 'VibeWall ওয়ালপেপার'}`)}`;
                         window.open(pinterestUrl, '_blank', 'width=600,height=600');
                       }}
                       className="py-4 bg-[#E60023] border border-[#E60023]/50 rounded-2xl flex items-center justify-center text-white hover:bg-[#c5001f] transition-all"
