@@ -308,6 +308,9 @@ export default function App() {
   const [isEarning, setIsEarning] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [playingRingtone, setPlayingRingtone] = useState<string | null>(null);
+  const [ringtonePrompt, setRingtonePrompt] = useState('');
+  const [isGeneratingRingtone, setIsGeneratingRingtone] = useState(false);
+  const [generatedRingtone, setGeneratedRingtone] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -1079,6 +1082,47 @@ export default function App() {
     }
   };
 
+  const generateAIRingtone = async () => {
+    if (!ringtonePrompt) return;
+    setIsGeneratingRingtone(true);
+    
+    try {
+      showToast("এআই রিংটোন তৈরি হচ্ছে, একটু অপেক্ষা করুন...", "info");
+      
+      const response = await fetch('/api/generate-ringtone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: ringtonePrompt }),
+      });
+      
+      if (!response.ok) throw new Error("Failed to start generation");
+      const prediction = await response.json();
+      
+      // Poll for result
+      let predictionId = prediction.id;
+      let finalPrediction = prediction;
+      
+      while (finalPrediction.status !== 'succeeded' && finalPrediction.status !== 'failed') {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        const pollResponse = await fetch(`/api/prediction/${predictionId}`);
+        finalPrediction = await pollResponse.json();
+      }
+      
+      if (finalPrediction.status === 'succeeded') {
+        setGeneratedRingtone(finalPrediction.output);
+        showToast("এআই রিংটোন সফলভাবে তৈরি হয়েছে!", "success");
+      } else {
+        throw new Error("Generation failed");
+      }
+      
+    } catch (error) {
+      console.error("Ringtone generation failed:", error);
+      showToast("দুঃখিত, রিংটোন তৈরি করা সম্ভব হয়নি। আবার চেষ্টা করুন।", "error");
+    } finally {
+      setIsGeneratingRingtone(false);
+    }
+  };
+
   const uniqueRingtones = Array.from(new Map([...MOCK_RINGTONES, ...dbRingtones].map(item => [item.url, item])).values());
   const filteredRingtones = uniqueRingtones.filter(rt => {
     const matchesSearch = rt.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -1354,12 +1398,14 @@ export default function App() {
               <p className="text-gray-400 text-lg">আপনার কল্পনাকে বাস্তবে রূপান্তর করুন। আপনি যা দেখতে চান তা বর্ণনা করুন।</p>
             </div>
             
-            <div className="bg-[#1A1A1A] rounded-[40px] p-10 border border-white/5 shadow-2xl relative overflow-hidden">
+            {/* Wallpaper Generator Section */}
+            <div className="bg-[#1A1A1A] rounded-[40px] p-10 border border-white/5 shadow-2xl relative overflow-hidden mb-12">
               <div className="absolute top-0 right-0 p-8 opacity-5">
                 <Sparkles className="w-40 h-40" />
               </div>
               
               <div className="relative z-10 space-y-8">
+                <h3 className="text-2xl font-bold">Create Wallpapers with AI</h3>
                 <div>
                   <label className="block text-xs font-bold text-gray-500 mb-4 uppercase tracking-widest">আপনার প্রম্পট</label>
                   <textarea 
@@ -1420,6 +1466,63 @@ export default function App() {
                 </div>
               </motion.div>
             )}
+
+            {/* Ringtone Generator Section */}
+            <div className="bg-[#1A1A1A] rounded-[40px] p-10 border border-white/5 shadow-2xl">
+              <h3 className="text-2xl font-bold mb-6">Create Ringtones with Suno AI</h3>
+              <div className="space-y-6">
+                <textarea 
+                  value={ringtonePrompt}
+                  onChange={(e) => setRingtonePrompt(e.target.value)}
+                  placeholder="আপনার রিংটোন কেমন হবে বর্ণনা করুন..."
+                  className="w-full bg-black/40 border border-white/10 rounded-3xl p-6 h-32 focus:outline-none focus:border-purple-500 transition-all resize-none"
+                />
+
+                {/* Genre Selection */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-4 uppercase tracking-widest">Genre</label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {['Hip-hop', 'Rock', 'Jazz', 'Electronic'].map((genre) => (
+                      <button key={genre} className="py-4 rounded-2xl bg-white/5 border border-white/5 hover:border-purple-500 transition-all text-sm font-bold">
+                        {genre}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Mood Selection */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-4 uppercase tracking-widest">Moods</label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {['Refined', 'Vibrant', 'Dynamic', 'Mellow'].map((mood) => (
+                      <button key={mood} className="py-4 rounded-2xl bg-white/5 border border-white/5 hover:border-purple-500 transition-all text-sm font-bold">
+                        {mood}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button 
+                  onClick={generateAIRingtone}
+                  disabled={isGeneratingRingtone || !ringtonePrompt}
+                  className="w-full bg-purple-600 hover:bg-purple-700 py-6 rounded-3xl font-black text-xl transition-all disabled:opacity-50"
+                >
+                  {isGeneratingRingtone ? "তৈরি হচ্ছে..." : "Create with Suno AI"}
+                </button>
+              </div>
+              
+              {generatedRingtone && (
+                <div className="mt-8 p-6 bg-black/40 rounded-3xl border border-white/10 flex items-center justify-between">
+                  <span className="font-bold">আপনার রিংটোন তৈরি হয়েছে!</span>
+                  <button 
+                    onClick={() => handleDownload(generatedRingtone, 'ai-ringtone.mp3')}
+                    className="bg-white text-black px-6 py-3 rounded-xl font-bold"
+                  >
+                    ডাউনলোড
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         );
       }
