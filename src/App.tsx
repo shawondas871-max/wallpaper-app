@@ -24,7 +24,10 @@ import {
   ChevronRight,
   LogOut,
   LogIn,
-  Share2
+  Share2,
+  Copy,
+  Eye,
+  Lock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
@@ -60,14 +63,27 @@ import {
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import imageCompression from 'browser-image-compression';
 
-const TABS = ['ওয়ালপেপার', 'এআই জেনারেটর', 'রিংটোন', 'আমার ভাইব'];
-const CATEGORIES = [
+const TABS = ['ওয়ালপেপার', 'এআই জেনারেটর', 'রিংটোন', 'টপ ক্রিয়েটর', 'আমার ভাইব'];
+const COLORS = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#000000', '#FFFFFF', '#FF00FF', '#00FFFF', '#FFA500', '#800080'];
+const WALLPAPER_CATEGORIES = [
   { id: 1, icon: Star, label: 'জনপ্রিয়' },
   { id: 2, icon: Zap, label: 'নতুন' },
-  { id: 3, icon: LayoutGrid, label: 'প্রকৃতি' },
-  { id: 4, icon: Sparkles, label: 'এক্সক্লুসিভ' },
-  { id: 5, icon: ImageIcon, label: 'অ্যাবস্ট্রাক্ট' },
-  { id: 6, icon: Music, label: 'অ্যানিমে' },
+  { id: 3, icon: LayoutGrid, label: 'Nature' },
+  { id: 4, icon: Sparkles, label: 'Dark' },
+  { id: 5, icon: ImageIcon, label: 'AMOLED' },
+  { id: 6, icon: Music, label: 'Anime' },
+  { id: 7, icon: Heart, label: 'Love' },
+  { id: 8, icon: Star, label: 'Islamic' },
+];
+
+const RINGTONE_CATEGORIES = [
+  { id: 1, icon: Star, label: 'জনপ্রিয়' },
+  { id: 2, icon: Zap, label: 'নতুন' },
+  { id: 3, icon: Music, label: 'Funny' },
+  { id: 4, icon: Heart, label: 'Sad' },
+  { id: 5, icon: Heart, label: 'Love' },
+  { id: 6, icon: Star, label: 'Islamic' },
+  { id: 7, icon: Music, label: 'Remix' },
 ];
 
 interface Toast {
@@ -89,6 +105,179 @@ const GoogleAd = ({ type = 'banner', className = '' }: { type?: 'banner' | 'in-f
       </div>
       <p className="text-gray-400 font-medium">Google AdSense Space</p>
       <p className="text-gray-600 text-xs mt-2 text-center">আপনার অ্যাডসেন্স অ্যাপ্রুভ হওয়ার পর এখানে আসল বিজ্ঞাপন দেখাবে</p>
+    </div>
+  );
+};
+
+const WallpaperCard = ({ w, setSelectedWallpaper, toggleFavorite, favorites, handleShare, index, unlockedItems }: any) => {
+  const isTrending = index !== undefined && index < 3;
+  const isLocked = w.isPremium && (!unlockedItems || !unlockedItems.includes(w.id));
+
+  return (
+    <div 
+      onClick={() => setSelectedWallpaper(w)}
+      className="break-inside-avoid mb-4 rounded-3xl overflow-hidden relative group cursor-pointer border border-white/5 shadow-xl"
+    >
+      <img 
+        src={w.url} 
+        loading="lazy"
+        className={cn(
+          "w-full h-auto object-cover transition-transform duration-700 group-hover:scale-110",
+          isLocked && "blur-md scale-110"
+        )} 
+        alt={w.title} 
+        referrerPolicy="no-referrer" 
+      />
+      {isLocked && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+          <div className="bg-black/60 backdrop-blur-md px-4 py-2 rounded-2xl flex items-center gap-2">
+            <Lock className="w-4 h-4 text-yellow-500" />
+            <span className="text-xs font-bold text-white">আনলক করুন</span>
+          </div>
+        </div>
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
+        <p className="text-sm font-bold">{w.title}</p>
+      </div>
+      <div className="absolute top-3 left-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button 
+          onClick={(e) => { e.stopPropagation(); toggleFavorite(w.id, 'wallpaper'); }}
+          className={cn(
+            "p-2 rounded-xl backdrop-blur-md border border-white/10 transition-all",
+            favorites.some((f: any) => f.itemId === w.id) ? "bg-rose-500 text-white border-rose-500" : "bg-black/40 text-white hover:bg-rose-500"
+          )}
+        >
+          <Heart className={cn("w-4 h-4", favorites.some((f: any) => f.itemId === w.id) && "fill-current")} />
+        </button>
+        <button 
+          onClick={(e) => { e.stopPropagation(); handleShare && handleShare(`VibeWall ওয়ালপেপার: ${w.title}`, "এই অসাধারণ ওয়ালপেপারটি দেখুন!", window.location.href); }}
+          className="p-2 rounded-xl backdrop-blur-md border border-white/10 bg-black/40 text-white hover:bg-white/20 transition-all"
+          title="শেয়ার করুন"
+        >
+          <Share2 className="w-4 h-4" />
+        </button>
+        <button 
+          onClick={(e) => { 
+            e.stopPropagation(); 
+            const siteUrl = window.location.origin;
+            const pinterestUrl = `https://www.pinterest.com/pin/create/button/?url=${encodeURIComponent(siteUrl)}&media=${encodeURIComponent(w.url)}&description=${encodeURIComponent(`VibeWall ওয়ালপেপার: ${w.title}`)}`;
+            window.open(pinterestUrl, '_blank', 'width=600,height=600');
+          }}
+          className="p-2 rounded-xl backdrop-blur-md border border-white/10 bg-[#E60023] text-white hover:bg-[#c5001f] transition-all"
+          title="Pinterest এ পিন করুন"
+        >
+          <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+            <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.162-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024 0 1.518.769 1.518 1.688 0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.165 1.775 2.165 2.128 0 3.768-2.245 3.768-5.487 0-2.861-2.063-4.869-5.008-4.869-3.41 0-5.409 2.562-5.409 5.199 0 1.033.394 2.143.889 2.741.099.12.112.225.085.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.401.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.951-7.252 4.182 0 7.431 2.981 7.431 6.966 0 4.156-2.618 7.501-6.258 7.501-1.221 0-2.37-.634-2.762-1.386l-.752 2.872c-.272 1.043-1.011 2.345-1.506 3.141 1.185.363 2.443.559 3.738.559 6.627 0 11.989-5.365 11.989-11.988C24 5.367 18.644 0 12.017 0z"/>
+          </svg>
+        </button>
+      </div>
+      <div className="absolute top-3 right-3 flex flex-col gap-2">
+        {w.isPremium && (
+          <div className="bg-yellow-500 p-1.5 rounded-lg shadow-2xl">
+            <Sparkles className="w-3 h-3 text-black" />
+          </div>
+        )}
+        {isTrending && (
+          <div className="bg-rose-500 text-white px-2 py-1 rounded-lg text-[10px] font-black flex items-center gap-1 shadow-lg">
+            <Zap className="w-3 h-3" /> TRENDING
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const RingtoneCard = ({ rt, playingRingtone, toggleRingtone, toggleFavorite, favorites, handleDownload, shareToPinterest, handleShare, unlockedItems, unlockItem, index }: any) => {
+  const isTrending = index !== undefined && index < 3;
+
+  return (
+    <div className="bg-[#1A1A1A] p-6 rounded-[32px] border border-white/5 flex flex-col md:flex-row md:items-center justify-between group hover:border-purple-500/30 transition-all shadow-lg gap-6 relative overflow-hidden">
+      {isTrending && (
+        <div className="absolute top-0 right-0 bg-rose-500 text-white px-3 py-1 rounded-bl-2xl text-[10px] font-black flex items-center gap-1 shadow-lg z-10">
+          <Zap className="w-3 h-3" /> TRENDING
+        </div>
+      )}
+      <div className="flex items-center gap-6">
+        <button 
+          onClick={() => toggleRingtone(rt.id, rt.url, rt.isPremium)}
+          className={cn(
+            "w-16 h-16 rounded-full flex items-center justify-center text-white shadow-xl transition-all transform group-hover:scale-105",
+            playingRingtone === rt.id ? "bg-gradient-to-br from-purple-500 to-pink-500 animate-pulse" : "bg-white/5 hover:bg-purple-500/20"
+          )}
+        >
+          {playingRingtone === rt.id ? <Pause className="w-8 h-8 fill-current" /> : <Play className="w-8 h-8 fill-current ml-1" />}
+        </button>
+        <div>
+          <h3 className="font-black text-xl mb-1 flex items-center gap-2">
+            {rt.title}
+            {rt.isPremium && (
+              <span className="bg-yellow-500 text-black px-2 py-0.5 rounded-lg text-[10px] font-black flex items-center gap-1">
+                <Sparkles className="w-3 h-3" /> PRO
+              </span>
+            )}
+          </h3>
+          <div className="flex flex-wrap items-center gap-3 text-sm font-bold text-gray-500 mb-2">
+            <span className="bg-white/5 px-3 py-1 rounded-lg">{rt.category}</span>
+            <span>•</span>
+            <span className="flex items-center gap-1"><Music className="w-4 h-4" /> {rt.duration}</span>
+            {rt.views !== undefined && (
+              <>
+                <span>•</span>
+                <span className="flex items-center gap-1"><Eye className="w-4 h-4" /> {rt.views}</span>
+              </>
+            )}
+            {rt.downloads !== undefined && (
+              <>
+                <span>•</span>
+                <span className="flex items-center gap-1"><Download className="w-4 h-4" /> {rt.downloads}</span>
+              </>
+            )}
+          </div>
+          {rt.tags && rt.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {rt.tags.map((tag: string) => (
+                <span key={tag} className="text-[10px] bg-purple-500/10 text-purple-400 px-2 py-1 rounded-md font-bold">
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="flex items-center gap-3 self-end md:self-auto">
+        <button 
+          onClick={() => handleShare && handleShare(`VibeWall রিংটোন: ${rt.title}`, "এই অসাধারণ রিংটোনটি শুনুন!", window.location.href)}
+          className="p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-all text-gray-400 hover:text-white"
+          title="শেয়ার করুন"
+        >
+          <Share2 className="w-6 h-6" />
+        </button>
+        <button 
+          onClick={() => toggleFavorite(rt.id, 'ringtone')}
+          className={cn(
+            "p-4 rounded-2xl transition-all",
+            favorites.some((f: any) => f.itemId === rt.id) ? "bg-rose-500/20 text-rose-500 border border-rose-500/20" : "bg-white/5 text-gray-400 hover:bg-rose-500/20 hover:text-rose-500"
+          )}
+        >
+          <Heart className={cn("w-6 h-6", favorites.some((f: any) => f.itemId === rt.id) && "fill-current")} />
+        </button>
+        {rt.isPremium && !unlockedItems?.includes(rt.id) ? (
+          <button 
+            onClick={() => unlockItem && unlockItem(rt.id, 100)}
+            className="bg-yellow-500 text-black px-6 py-4 rounded-2xl font-black text-sm flex items-center gap-2 hover:bg-yellow-400 transition-all transform hover:scale-105 shadow-xl shadow-yellow-500/20"
+          >
+            <Sparkles className="w-5 h-5" />
+            100
+          </button>
+        ) : (
+          <button 
+            onClick={() => handleDownload(rt.url || '', `${rt.title}.mp3`)}
+            className="p-4 bg-purple-600 rounded-2xl hover:bg-purple-700 transition-all shadow-xl shadow-purple-500/20"
+          >
+            <Download className="w-6 h-6 text-white" />
+          </button>
+        )}
+      </div>
     </div>
   );
 };
@@ -128,10 +317,70 @@ export default function App() {
     }
   }, []);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [visibleWallpapers, setVisibleWallpapers] = useState(12);
+  const [visibleRingtones, setVisibleRingtones] = useState(12);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  // Infinite Scroll Observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          if (activeTab === 'ওয়ালপেপার') {
+            setVisibleWallpapers((prev) => prev + 12);
+          } else if (activeTab === 'রিংটোন') {
+            setVisibleRingtones((prev) => prev + 12);
+          }
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [activeTab]);
+
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [tempDisplayName, setTempDisplayName] = useState('');
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+
+  // PWA Install Prompt
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      // Show the install prompt after a short delay to not overwhelm the user immediately
+      setTimeout(() => setShowInstallPrompt(true), 5000);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    
+    if (outcome === 'accepted') {
+      console.log('User accepted the install prompt');
+    } else {
+      console.log('User dismissed the install prompt');
+    }
+    
+    setDeferredPrompt(null);
+    setShowInstallPrompt(false);
+  };
 
   // Auth Listener
   useEffect(() => {
@@ -141,6 +390,54 @@ export default function App() {
     });
     return () => unsubscribe();
   }, []);
+
+  // SEO Optimization
+  useEffect(() => {
+    let title = 'VibeWall - Premium Wallpapers & Ringtones';
+    let description = 'Download high-quality 4K, AMOLED, Nature, Anime wallpapers and trending ringtones for free.';
+    
+    if (selectedWallpaper) {
+      title = `${selectedWallpaper.title} - VibeWall`;
+      description = `Download ${selectedWallpaper.title} wallpaper for free. Category: ${selectedWallpaper.category}.`;
+    } else if (selectedCategory) {
+      title = `${selectedCategory} ${activeTab} - VibeWall`;
+      description = `Explore the best ${selectedCategory} ${activeTab} on VibeWall.`;
+    } else if (activeTab !== 'ওয়ালপেপার') {
+      title = `${activeTab} - VibeWall`;
+    }
+
+    document.title = title;
+    
+    // Update meta tags
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute('content', description);
+    } else {
+      const meta = document.createElement('meta');
+      meta.name = 'description';
+      meta.content = description;
+      document.head.appendChild(meta);
+    }
+
+    // Open Graph tags
+    const updateOGTag = (property: string, content: string) => {
+      let tag = document.querySelector(`meta[property="${property}"]`);
+      if (!tag) {
+        tag = document.createElement('meta');
+        tag.setAttribute('property', property);
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute('content', content);
+    };
+
+    updateOGTag('og:title', title);
+    updateOGTag('og:description', description);
+    if (selectedWallpaper) {
+      updateOGTag('og:image', selectedWallpaper.url);
+    } else {
+      updateOGTag('og:image', 'https://raw.githubusercontent.com/nd943894/nd943894/main/ai_4k_icon.png');
+    }
+  }, [activeTab, selectedCategory, selectedWallpaper]);
 
   // Profile Sync
   useEffect(() => {
@@ -158,8 +455,20 @@ export default function App() {
         setProfile(data);
         setCoins(data.coins);
         setIsPro(data.isPro);
+        
+        // Daily Login Reward Logic
+        const today = new Date().toISOString().split('T')[0];
+        if (data.lastLoginDate !== today) {
+          updateDoc(userDocRef, {
+            lastLoginDate: today,
+            coins: (data.coins || 0) + 50
+          }).then(() => {
+            showToast("দৈনিক লগইন পুরস্কার! +৫০ Z", "success");
+          }).catch(err => console.error("Error updating daily login:", err));
+        }
       } else {
         // Create initial profile
+        const today = new Date().toISOString().split('T')[0];
         const newProfile: UserProfile = {
           uid: user.uid,
           email: user.email || '',
@@ -168,7 +477,8 @@ export default function App() {
           coins: 1000, // Starting bonus
           isPro: false,
           role: user.email === 'nd943894@gmail.com' ? 'admin' : 'user',
-          createdAt: serverTimestamp()
+          createdAt: serverTimestamp(),
+          lastLoginDate: today
         };
         setDoc(userDocRef, newProfile).catch(err => handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}`));
       }
@@ -258,8 +568,50 @@ export default function App() {
     }, 3000);
   };
 
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [isDownloadAdOpen, setIsDownloadAdOpen] = useState(false);
+  const [downloadCountdown, setDownloadCountdown] = useState(0);
+  const [pendingDownload, setPendingDownload] = useState<{url: string, filename: string} | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+
   const handleDownload = async (url: string, filename: string) => {
-    showToast("ডাউনলোড শুরু হচ্ছে...", "info");
+    setPendingDownload({ url, filename });
+    setIsDownloadAdOpen(true);
+    setDownloadCountdown(3);
+
+    let count = 3;
+    const interval = setInterval(() => {
+      count -= 1;
+      setDownloadCountdown(count);
+      if (count <= 0) {
+        clearInterval(interval);
+        executeDownload(url, filename);
+      }
+    }, 1000);
+  };
+
+  const executeDownload = async (url: string, filename: string) => {
+    setIsDownloadAdOpen(false);
+    setIsDownloading(true);
+    setDownloadProgress(0);
+    showToast("ডাউনলোড প্রস্তুত করা হচ্ছে...", "info");
+    
+    // Fake progress for 3 seconds
+    const progressInterval = setInterval(() => {
+      setDownloadProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(progressInterval);
+          return 90;
+        }
+        return prev + 10;
+      });
+    }, 300);
+
+    // 3 second delay
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    clearInterval(progressInterval);
+    setDownloadProgress(100);
     
     const downloadBlob = async (blob: Blob) => {
       try {
@@ -285,11 +637,54 @@ export default function App() {
     };
 
     try {
+      // If it's an image, add watermark
+      if (filename.match(/\.(jpg|jpeg|png|webp)$/i) || url.startsWith('data:image')) {
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.src = url;
+        
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+        });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          
+          // Add watermark
+          ctx.font = `bold ${Math.max(20, img.width * 0.03)}px Inter, sans-serif`;
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+          ctx.textAlign = 'right';
+          ctx.textBaseline = 'bottom';
+          
+          // Add shadow for better visibility
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+          ctx.shadowBlur = 10;
+          ctx.shadowOffsetX = 2;
+          ctx.shadowOffsetY = 2;
+          
+          ctx.fillText('VibeWall', canvas.width - 20, canvas.height - 20);
+          
+          canvas.toBlob(async (blob) => {
+            if (blob) await downloadBlob(blob);
+            setIsDownloading(false);
+          }, 'image/jpeg', 0.95);
+          return;
+        }
+      }
+
+      // Fallback for non-images or if canvas fails
       const response = await fetch(url);
       if (!response.ok) throw new Error("Network response was not ok");
       const blob = await response.blob();
       const success = await downloadBlob(blob);
       if (!success) throw new Error("Blob download failed");
+      setIsDownloading(false);
     } catch (error) {
       console.error("Direct download failed, trying proxy:", error);
       try {
@@ -299,11 +694,13 @@ export default function App() {
         const blob = await proxyResponse.blob();
         const success = await downloadBlob(blob);
         if (!success) throw new Error("Proxy blob download failed");
+        setIsDownloading(false);
       } catch (proxyError) {
         console.error("Proxy download failed:", proxyError);
         // Ultimate fallback: open in new tab
         window.open(url, '_blank');
         showToast("সরাসরি ডাউনলোড করা যায়নি, নতুন ট্যাবে খোলা হয়েছে। দয়া করে চেপে ধরে সেভ করুন।", "error");
+        setIsDownloading(false);
       }
     }
   };
@@ -338,6 +735,35 @@ export default function App() {
         handleFirestoreError(err, OperationType.UPDATE, `users/${user.uid}`);
       }
     }, 5000);
+  };
+
+  const shareToEarn = async () => {
+    if (!user) {
+      showToast("শেয়ার করে কয়েন পেতে সাইন ইন করুন", "info");
+      return;
+    }
+    
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'VibeWall - Premium Wallpapers & Ringtones',
+          text: 'VibeWall থেকে অসাধারণ সব ওয়ালপেপার এবং রিংটোন ডাউনলোড করুন!',
+          url: window.location.origin,
+        });
+        
+        // Reward user after successful share
+        const userDocRef = doc(db, 'users', user.uid);
+        await updateDoc(userDocRef, {
+          coins: (profile?.coins || 0) + 20
+        });
+        showToast("শেয়ার করার জন্য ধন্যবাদ! আপনি ২০ Z পেয়েছেন।", "success");
+      } else {
+        navigator.clipboard.writeText(window.location.origin);
+        showToast("লিঙ্ক কপি করা হয়েছে! বন্ধুদের সাথে শেয়ার করুন।", "success");
+      }
+    } catch (error) {
+      console.error("Error sharing:", error);
+    }
   };
 
   const unlockItem = async (id: string, cost: number) => {
@@ -566,10 +992,16 @@ export default function App() {
     }
   };
 
-  const filteredWallpapers = [...MOCK_WALLPAPERS, ...dbWallpapers].filter(w => {
+  const uniqueWallpapers = Array.from(new Map([...MOCK_WALLPAPERS, ...dbWallpapers].map(item => [item.url, item])).values());
+  const filteredWallpapers = uniqueWallpapers.filter(w => {
     const matchesSearch = w.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          w.category.toLowerCase().includes(searchQuery.toLowerCase());
     
+    // Mock color filter logic
+    const matchesColor = selectedColor ? (w.id.charCodeAt(0) % COLORS.length === COLORS.indexOf(selectedColor)) : true;
+
+    if (!matchesColor) return false;
+
     if (selectedCategory === 'এক্সক্লুসিভ') {
       return matchesSearch && (w.category === 'এক্সক্লুসিভ' || w.isPremium);
     }
@@ -646,6 +1078,22 @@ export default function App() {
     }
   };
 
+  const uniqueRingtones = Array.from(new Map([...MOCK_RINGTONES, ...dbRingtones].map(item => [item.url, item])).values());
+  const filteredRingtones = uniqueRingtones.filter(rt => {
+    const matchesSearch = rt.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         rt.category.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    if (selectedCategory === 'এক্সক্লুসিভ') {
+      return matchesSearch && (rt.category === 'এক্সক্লুসিভ' || rt.isPremium);
+    }
+
+    if (selectedCategory) {
+      return matchesSearch && rt.category === selectedCategory;
+    }
+
+    return matchesSearch;
+  });
+
   const shareToPinterest = (url: string, media: string, description: string) => {
     // For Pinterest, we want to share the actual image URL as the media
     // and the website URL as the link back
@@ -654,7 +1102,33 @@ export default function App() {
     window.open(pinterestUrl, '_blank', 'width=600,height=600');
   };
 
-  const toggleRingtone = (id: string, url?: string) => {
+  const handleShare = async (title: string, text: string, url: string) => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title,
+          text,
+          url,
+        });
+        showToast("শেয়ার করা হয়েছে!", "success");
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          console.error("Error sharing:", error);
+          showToast("শেয়ার করা যায়নি।", "error");
+        }
+      }
+    } else {
+      // Fallback: copy to clipboard
+      try {
+        await navigator.clipboard.writeText(url);
+        showToast("লিঙ্ক কপি করা হয়েছে!", "success");
+      } catch (err) {
+        showToast("লিঙ্ক কপি করা যায়নি।", "error");
+      }
+    }
+  };
+
+  const toggleRingtone = (id: string, url?: string, isPremium?: boolean) => {
     if (playingRingtone === id) {
       audioRef.current?.pause();
       setPlayingRingtone(null);
@@ -668,6 +1142,30 @@ export default function App() {
         });
         setPlayingRingtone(id);
         showToast("প্রিভিউ বাজছে...", "info");
+
+        // 10s preview limit for premium ringtones
+        if (isPremium && !unlockedItems.includes(id)) {
+          const handleTimeUpdate = () => {
+            if (audioRef.current && audioRef.current.currentTime >= 10) {
+              audioRef.current.pause();
+              setPlayingRingtone(null);
+              showToast("সম্পূর্ণ রিংটোন শুনতে আনলক করুন", "info");
+              audioRef.current.removeEventListener('timeupdate', handleTimeUpdate);
+            }
+          };
+          audioRef.current.addEventListener('timeupdate', handleTimeUpdate);
+          
+          // Clean up listener when audio ends or pauses
+          audioRef.current.onended = () => {
+            audioRef.current?.removeEventListener('timeupdate', handleTimeUpdate);
+            setPlayingRingtone(null);
+          };
+          audioRef.current.onpause = () => {
+            audioRef.current?.removeEventListener('timeupdate', handleTimeUpdate);
+          };
+        } else {
+          audioRef.current.onended = () => setPlayingRingtone(null);
+        }
       } else {
         showToast("অডিও ফাইল পাওয়া যায়নি।", "error");
       }
@@ -705,7 +1203,7 @@ export default function App() {
         const newDocRef = doc(collection(db, 'wallpapers'));
         await setDoc(newDocRef, {
           id: newDocRef.id,
-          title: `অটোমেটিক ওয়ালপেপার ${img.id}`,
+          title: `VibeWall কালেকশন ${img.id}`,
           url: `https://picsum.photos/id/${img.id}/400/600`,
           category: 'নতুন',
           authorId: user.uid,
@@ -769,7 +1267,7 @@ export default function App() {
         const newDocRef = doc(collection(db, 'ringtones'));
         await setDoc(newDocRef, {
           id: newDocRef.id,
-          title: `অটোমেটিক রিংটোন ${dayOfYear}-${i + 1}`,
+          title: `VibeWall রিংটোন ${dayOfYear}-${i + 1}`,
           url: audioUrls[urlIndex],
           category: 'নতুন',
           duration: '0:30',
@@ -934,62 +1432,128 @@ export default function App() {
                 <h2 className="text-5xl font-black mb-4">রিংটোন</h2>
                 <p className="text-gray-400 text-lg">আপনার ফোনের জন্য সেরা শব্দের সংগ্রহ</p>
               </div>
-              <div className="hidden md:flex gap-4">
-                {['জনপ্রিয়', 'নতুন', 'ট্রেন্ডিং'].map(f => (
-                  <button key={f} className="px-8 py-3 rounded-full bg-white/5 border border-white/5 text-sm font-bold hover:bg-white/10 transition-all">
-                    {f}
+            </div>
+
+            {/* Ringtone Categories Grid */}
+            <section className="mb-16">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-bold">বিভাগ</h2>
+                <button className="text-purple-400 text-xs font-bold hover:underline">সব দেখুন</button>
+              </div>
+              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
+                {RINGTONE_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(cat.label)}
+                    className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-[#1A1A1A] border border-white/5 hover:border-purple-500/50 transition-all group shadow-lg"
+                  >
+                    <div className={cn(
+                      "w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform bg-white/5 text-gray-400 group-hover:text-purple-400"
+                    )}>
+                      <cat.icon className="w-5 h-5" />
+                    </div>
+                    <span className="text-[9px] font-black text-gray-500 group-hover:text-white uppercase tracking-widest">{cat.label}</span>
                   </button>
                 ))}
               </div>
-            </div>
+            </section>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[...MOCK_RINGTONES, ...dbRingtones].map((rt) => (
-                <div key={rt.id} className="bg-[#1A1A1A] p-6 rounded-2xl border border-white/5 flex items-center justify-between group hover:border-purple-500/30 transition-all shadow-lg">
-                  <div className="flex items-center gap-4">
-                    <button 
-                      onClick={() => toggleRingtone(rt.id, rt.url)}
-                      className={cn(
-                        "w-12 h-12 rounded-full flex items-center justify-center text-white shadow-xl transition-all group-hover:scale-110",
-                        playingRingtone === rt.id ? "bg-purple-500" : "bg-purple-500/20"
-                      )}
-                    >
-                      {playingRingtone === rt.id ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current ml-1" />}
-                    </button>
-                    <div>
-                      <h3 className="font-bold text-lg mb-0.5">{rt.title}</h3>
-                      <p className="text-xs text-gray-500">{rt.category} • {rt.duration}</p>
+              {[...filteredRingtones].sort((a, b) => {
+                if (selectedCategory) return 0; // Don't sort if category is selected
+                const scoreA = (a.count || 0); // Mock score for ringtones
+                const scoreB = (b.count || 0);
+                return scoreB - scoreA;
+              }).slice(0, visibleRingtones).map((rt, index) => (
+                <React.Fragment key={rt.id}>
+                  <RingtoneCard 
+                    rt={rt} 
+                    playingRingtone={playingRingtone} 
+                    toggleRingtone={toggleRingtone} 
+                    toggleFavorite={toggleFavorite} 
+                    favorites={favorites} 
+                    handleDownload={handleDownload} 
+                    shareToPinterest={shareToPinterest} 
+                    unlockedItems={unlockedItems} 
+                    unlockItem={unlockItem} 
+                    handleShare={handleShare}
+                    index={index}
+                  />
+                  {(index + 1) % 6 === 0 && (
+                    <div className="col-span-1 md:col-span-2">
+                      <GoogleAd type="in-feed" />
                     </div>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+            {visibleRingtones < filteredRingtones.length && (
+              <div ref={loadMoreRef} className="h-20 flex items-center justify-center mt-8">
+                <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      if (activeTab === 'টপ ক্রিয়েটর') {
+        // Calculate top creators
+        const creatorStats: Record<string, { name: string, photo: string, score: number, uploads: number }> = {};
+        
+        dbWallpapers.forEach(w => {
+          if (w.authorId && w.authorName) {
+            if (!creatorStats[w.authorId]) {
+              creatorStats[w.authorId] = { name: w.authorName, photo: '', score: 0, uploads: 0 };
+            }
+            creatorStats[w.authorId].uploads += 1;
+            creatorStats[w.authorId].score += (w.likes || 0) * 2 + (w.downloads || 0) * 5 + (w.views || 0);
+          }
+        });
+
+        const topCreators = Object.values(creatorStats).sort((a, b) => b.score - a.score).slice(0, 10);
+
+        return (
+          <div className="py-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="text-center mb-16">
+              <div className="w-20 h-20 bg-yellow-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-yellow-500/20">
+                <Star className="w-10 h-10 text-yellow-500 fill-current" />
+              </div>
+              <h2 className="text-4xl font-black mb-4">টপ ক্রিয়েটর</h2>
+              <p className="text-gray-400 text-lg max-w-2xl mx-auto">যারা সবচেয়ে বেশি এবং সেরা কোয়ালিটির ওয়ালপেপার আপলোড করে আমাদের কমিউনিটিকে সমৃদ্ধ করেছেন।</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              {topCreators.map((creator, index) => (
+                <div key={index} className="bg-[#1A1A1A] rounded-3xl p-6 border border-white/5 flex items-center gap-6 relative overflow-hidden group hover:border-purple-500/30 transition-all">
+                  <div className="absolute -right-4 -top-4 text-9xl font-black text-white/5 group-hover:text-purple-500/5 transition-colors">
+                    {index + 1}
                   </div>
-                  <div className="flex items-center gap-3">
-                    <button 
-                      onClick={() => toggleFavorite(rt.id, 'ringtone')}
-                      className={cn(
-                        "p-3 rounded-xl transition-all",
-                        favorites.some(f => f.itemId === rt.id) ? "bg-rose-500/20 text-rose-500 border border-rose-500/20" : "bg-white/5 text-gray-400 hover:bg-rose-500/20 hover:text-rose-500"
-                      )}
-                    >
-                      <Heart className={cn("w-5 h-5", favorites.some(f => f.itemId === rt.id) && "fill-current")} />
-                    </button>
-                    {rt.isPremium && !unlockedItems.includes(rt.id) ? (
-                      <button 
-                        onClick={() => unlockItem(rt.id, 100)}
-                        className="bg-yellow-500 text-black px-6 py-2 rounded-xl font-black text-xs flex items-center gap-2 hover:bg-yellow-400 transition-all transform hover:scale-105"
-                      >
-                        <Sparkles className="w-4 h-4" />
-                        100
-                      </button>
-                    ) : (
-                      <button 
-                        onClick={() => handleDownload(rt.url || '', `${rt.title}.mp3`)}
-                        className="p-3 bg-white/5 rounded-xl hover:bg-white/10 transition-all"
-                      >
-                        <Download className="w-5 h-5" />
-                      </button>
+                  <div className="relative z-10">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-2xl font-black text-white shadow-lg">
+                      {creator.name.charAt(0).toUpperCase()}
+                    </div>
+                    {index < 3 && (
+                      <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center border-4 border-[#1A1A1A]">
+                        <Star className="w-4 h-4 text-black fill-current" />
+                      </div>
                     )}
+                  </div>
+                  <div className="relative z-10">
+                    <h3 className="text-xl font-bold mb-1">{creator.name}</h3>
+                    <p className="text-sm text-gray-400 mb-2">{creator.uploads} আপলোড</p>
+                    <div className="flex items-center gap-2 text-xs font-bold text-purple-400 bg-purple-500/10 px-3 py-1 rounded-full w-fit">
+                      <Zap className="w-3 h-3" />
+                      {creator.score.toLocaleString()} পয়েন্ট
+                    </div>
                   </div>
                 </div>
               ))}
+              
+              {topCreators.length === 0 && (
+                <div className="col-span-full text-center py-12 text-gray-500">
+                  এখনও কোনো ক্রিয়েটর নেই। আপনিই প্রথম হতে পারেন!
+                </div>
+              )}
             </div>
           </div>
         );
@@ -1017,8 +1581,8 @@ export default function App() {
 
         const myUploads = dbWallpapers.filter(w => w.authorId === user.uid || (w as any).authorUid === user.uid);
         const myRingtones = dbRingtones.filter(r => r.authorId === user.uid);
-        const myFavWallpapers = [...MOCK_WALLPAPERS, ...dbWallpapers].filter(w => favorites.some(f => f.itemId === w.id && f.itemType === 'wallpaper'));
-        const myFavRingtones = [...MOCK_RINGTONES, ...dbRingtones].filter(r => favorites.some(f => f.itemId === r.id && f.itemType === 'ringtone'));
+        const myFavWallpapers = uniqueWallpapers.filter(w => favorites.some(f => f.itemId === w.id && f.itemType === 'wallpaper'));
+        const myFavRingtones = uniqueRingtones.filter(r => favorites.some(f => f.itemId === r.id && f.itemType === 'ringtone'));
 
         return (
           <div className="py-16 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto">
@@ -1065,6 +1629,13 @@ export default function App() {
                       <p className="text-xs text-purple-600 uppercase font-bold mb-1">প্রতিদিনের পুরস্কার</p>
                       <span>{isShowingAd ? 'বিজ্ঞাপন চলছে...' : 'বিজ্ঞাপন দেখুন (+৫০ Z)'}</span>
                     </button>
+                    <button 
+                      onClick={shareToEarn}
+                      className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-10 py-5 rounded-3xl font-black text-lg hover:opacity-90 transition-all transform hover:scale-105 shadow-xl shadow-purple-500/20"
+                    >
+                      <p className="text-xs text-white/70 uppercase font-bold mb-1">শেয়ার করে আয় করুন</p>
+                      <span className="flex items-center justify-center gap-2"><Share2 className="w-5 h-5" /> শেয়ার করুন (+২০ Z)</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1073,18 +1644,9 @@ export default function App() {
             <div className="mb-16">
               <h3 className="text-2xl font-bold mb-8 px-4">আমার আপলোড করা ওয়ালপেপার</h3>
               {myUploads.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4">
                   {myUploads.map((w) => (
-                    <div 
-                      key={w.id} 
-                      onClick={() => setSelectedWallpaper(w)}
-                      className="aspect-[9/16] rounded-3xl overflow-hidden relative group cursor-pointer border border-white/5 shadow-xl"
-                    >
-                      <img src={w.url} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={w.title} referrerPolicy="no-referrer" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
-                        <p className="text-xs font-bold">{w.title}</p>
-                      </div>
-                    </div>
+                    <WallpaperCard key={w.id} w={w} setSelectedWallpaper={setSelectedWallpaper} toggleFavorite={toggleFavorite} favorites={favorites} handleShare={handleShare} unlockedItems={profile?.unlockedItems} />
                   ))}
                 </div>
               ) : (
@@ -1097,24 +1659,9 @@ export default function App() {
 
             <div className="mb-16">
               <h3 className="text-2xl font-bold mb-8 px-4">আমার প্রিয়</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4">
                 {myFavWallpapers.map((w) => (
-                  <div 
-                    key={w.id} 
-                    onClick={() => setSelectedWallpaper(w)}
-                    className="aspect-[9/16] rounded-3xl overflow-hidden relative group cursor-pointer border border-white/5 shadow-xl"
-                  >
-                    <img src={w.url} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={w.title} referrerPolicy="no-referrer" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
-                      <p className="text-xs font-bold">{w.title}</p>
-                    </div>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); toggleFavorite(w.id, 'wallpaper'); }}
-                      className="absolute top-3 right-3 bg-rose-500 p-2 rounded-xl shadow-lg"
-                    >
-                      <Heart className="w-4 h-4 text-white fill-current" />
-                    </button>
-                  </div>
+                  <WallpaperCard key={w.id} w={w} setSelectedWallpaper={setSelectedWallpaper} toggleFavorite={toggleFavorite} favorites={favorites} handleShare={handleShare} unlockedItems={profile?.unlockedItems} />
                 ))}
               </div>
             </div>
@@ -1124,38 +1671,18 @@ export default function App() {
               {myRingtones.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {myRingtones.map((rt) => (
-                    <div key={rt.id} className="bg-[#1A1A1A] p-6 rounded-2xl border border-white/5 flex items-center justify-between group hover:border-purple-500/30 transition-all shadow-lg">
-                      <div className="flex items-center gap-4">
-                        <button 
-                          onClick={() => toggleRingtone(rt.id, rt.url)}
-                          className={cn(
-                            "w-12 h-12 rounded-full flex items-center justify-center text-white shadow-xl transition-all group-hover:scale-110",
-                            playingRingtone === rt.id ? "bg-purple-500" : "bg-purple-500/20"
-                          )}
-                        >
-                          {playingRingtone === rt.id ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current ml-1" />}
-                        </button>
-                        <div>
-                          <h3 className="font-bold text-lg mb-0.5">{rt.title}</h3>
-                          <p className="text-xs text-gray-500">{rt.category} • {rt.duration}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <button 
-                          onClick={() => shareToPinterest(window.location.href, "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=800", `VibeWall রিংটোন: ${rt.title}`)}
-                          className="p-3 bg-white/5 rounded-xl hover:bg-white/10 transition-all text-gray-400 hover:text-red-500"
-                          title="Pinterest-এ শেয়ার করুন"
-                        >
-                          <Share2 className="w-5 h-5" />
-                        </button>
-                        <button 
-                          onClick={() => handleDownload(rt.url || '', `${rt.title}.mp3`)}
-                          className="p-3 bg-white/5 rounded-xl hover:bg-white/10 transition-all"
-                        >
-                          <Download className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </div>
+                    <RingtoneCard 
+                      key={rt.id} 
+                      rt={rt} 
+                      playingRingtone={playingRingtone} 
+                      toggleRingtone={toggleRingtone} 
+                      toggleFavorite={toggleFavorite} 
+                      favorites={favorites} 
+                      handleDownload={handleDownload} 
+                      shareToPinterest={shareToPinterest} 
+                      unlockedItems={profile?.unlockedItems} 
+                      unlockItem={unlockItem} 
+                    />
                   ))}
                 </div>
               ) : (
@@ -1171,43 +1698,18 @@ export default function App() {
               {myFavRingtones.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {myFavRingtones.map((rt) => (
-                    <div key={rt.id} className="bg-[#1A1A1A] p-6 rounded-2xl border border-white/5 flex items-center justify-between group hover:border-purple-500/30 transition-all shadow-lg">
-                      <div className="flex items-center gap-4">
-                        <button 
-                          onClick={() => toggleRingtone(rt.id, rt.url)}
-                          className={cn(
-                            "w-12 h-12 rounded-full flex items-center justify-center text-white shadow-xl transition-all group-hover:scale-110",
-                            playingRingtone === rt.id ? "bg-purple-500" : "bg-purple-500/20"
-                          )}
-                        >
-                          {playingRingtone === rt.id ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current ml-1" />}
-                        </button>
-                        <div>
-                          <h3 className="font-bold text-lg mb-0.5">{rt.title}</h3>
-                          <p className="text-xs text-gray-500">{rt.category} • {rt.duration}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <button 
-                          onClick={() => shareToPinterest(window.location.href, "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=800", `VibeWall রিংটোন: ${rt.title}`)}
-                          className="p-3 bg-white/5 rounded-xl hover:bg-white/10 transition-all text-gray-400 hover:text-red-500"
-                        >
-                          <Share2 className="w-5 h-5" />
-                        </button>
-                        <button 
-                          onClick={() => toggleFavorite(rt.id, 'ringtone')}
-                          className="p-3 bg-rose-500/20 text-rose-500 rounded-xl hover:bg-rose-500/30 transition-all"
-                        >
-                          <Heart className="w-5 h-5 fill-current" />
-                        </button>
-                        <button 
-                          onClick={() => handleDownload(rt.url || '', `${rt.title}.mp3`)}
-                          className="p-3 bg-white/5 rounded-xl hover:bg-white/10 transition-all"
-                        >
-                          <Download className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </div>
+                    <RingtoneCard 
+                      key={rt.id} 
+                      rt={rt} 
+                      playingRingtone={playingRingtone} 
+                      toggleRingtone={toggleRingtone} 
+                      toggleFavorite={toggleFavorite} 
+                      favorites={favorites} 
+                      handleDownload={handleDownload} 
+                      shareToPinterest={shareToPinterest} 
+                      unlockedItems={profile?.unlockedItems} 
+                      unlockItem={unlockItem} 
+                    />
                   ))}
                 </div>
               ) : (
@@ -1289,36 +1791,23 @@ export default function App() {
             <h2 className="text-4xl font-black">{displayTitle}</h2>
             <p className="text-gray-500 font-medium">{items.length} আইটেম পাওয়া গেছে</p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
-            {items.map((w) => (
-              <div 
-                key={w.id} 
-                onClick={() => setSelectedWallpaper(w)}
-                className="aspect-[9/16] rounded-3xl overflow-hidden relative group cursor-pointer border border-white/5"
-              >
-                <img src={w.url} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt={w.title} referrerPolicy="no-referrer" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6">
-                  <p className="text-sm font-bold">{w.title}</p>
-                </div>
-                <div className="absolute top-4 left-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); toggleFavorite(w.id, 'wallpaper'); }}
-                    className={cn(
-                      "p-3 rounded-2xl backdrop-blur-md border border-white/10 transition-all",
-                      favorites.some(f => f.itemId === w.id) ? "bg-rose-500 text-white border-rose-500" : "bg-black/40 text-white hover:bg-rose-500"
-                    )}
-                  >
-                    <Heart className={cn("w-5 h-5", favorites.some(f => f.itemId === w.id) && "fill-current")} />
-                  </button>
-                </div>
-                {w.isPremium && (
-                  <div className="absolute top-4 right-4 bg-yellow-500 p-2 rounded-xl">
-                    <Sparkles className="w-4 h-4 text-black" />
+          <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4">
+            {items.slice(0, visibleWallpapers).map((w, index) => (
+              <React.Fragment key={w.id}>
+                <WallpaperCard w={w} setSelectedWallpaper={setSelectedWallpaper} toggleFavorite={toggleFavorite} favorites={favorites} handleShare={handleShare} unlockedItems={profile?.unlockedItems} />
+                {(index + 1) % 6 === 0 && (
+                  <div className="break-inside-avoid mb-4">
+                    <GoogleAd type="in-feed" className="h-full min-h-[250px]" />
                   </div>
                 )}
-              </div>
+              </React.Fragment>
             ))}
           </div>
+          {visibleWallpapers < items.length && (
+            <div ref={loadMoreRef} className="h-20 flex items-center justify-center mt-8">
+              <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          )}
         </div>
       );
     }
@@ -1378,26 +1867,45 @@ export default function App() {
             <h2 className="text-2xl font-bold">বিভাগ</h2>
             <button className="text-purple-400 text-xs font-bold hover:underline">সব দেখুন</button>
           </div>
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-            {CATEGORIES.map((cat) => (
+          <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-6">
+            {WALLPAPER_CATEGORIES.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.label)}
                 className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-[#1A1A1A] border border-white/5 hover:border-purple-500/50 transition-all group shadow-lg"
               >
                 <div className={cn(
-                  "w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform",
-                  cat.label === 'প্রকৃতি' ? "bg-green-500/10 text-green-400" :
-                  cat.label === 'অ্যানিমে' ? "bg-blue-500/10 text-blue-400" :
-                  cat.label === 'অ্যাবস্ট্রাক্ট' ? "bg-pink-500/10 text-pink-400" :
-                  cat.label === 'নতুন' ? "bg-orange-500/10 text-orange-400" :
-                  cat.label === 'জনপ্রিয়' ? "bg-red-500/10 text-red-400" :
-                  "bg-yellow-500/10 text-yellow-500"
+                  "w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform bg-white/5 text-gray-400 group-hover:text-purple-400"
                 )}>
                   <cat.icon className="w-5 h-5" />
                 </div>
                 <span className="text-[9px] font-black text-gray-500 group-hover:text-white uppercase tracking-widest">{cat.label}</span>
               </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-3 overflow-x-auto pb-4 scrollbar-hide">
+            <span className="text-sm font-bold text-gray-500 whitespace-nowrap mr-2">কালার ফিল্টার:</span>
+            <button
+              onClick={() => setSelectedColor(null)}
+              className={cn(
+                "px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border",
+                selectedColor === null ? "bg-white text-black border-white" : "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10"
+              )}
+            >
+              সব
+            </button>
+            {COLORS.map((color) => (
+              <button
+                key={color}
+                onClick={() => setSelectedColor(color)}
+                className={cn(
+                  "w-8 h-8 rounded-full flex-shrink-0 transition-all border-2",
+                  selectedColor === color ? "border-white scale-110 shadow-lg shadow-white/20" : "border-transparent hover:scale-110"
+                )}
+                style={{ backgroundColor: color }}
+                aria-label={`Filter by color ${color}`}
+              />
             ))}
           </div>
         </section>
@@ -1416,34 +1924,16 @@ export default function App() {
               <div className="w-2 h-2 rounded-full bg-white/10" />
             </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            {[...MOCK_WALLPAPERS, ...dbWallpapers].filter(w => w.category === 'ফিচার্ড').map((w) => (
-              <div 
-                key={w.id} 
-                onClick={() => setSelectedWallpaper(w)}
-                className="aspect-[9/16] rounded-3xl overflow-hidden relative group cursor-pointer border border-white/5 shadow-xl"
-              >
-                <img src={w.url} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={w.title} referrerPolicy="no-referrer" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
-                  <p className="text-xs font-bold">{w.title}</p>
-                </div>
-                <div className="absolute top-3 left-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); toggleFavorite(w.id, 'wallpaper'); }}
-                    className={cn(
-                      "p-2 rounded-xl backdrop-blur-md border border-white/10 transition-all",
-                      favorites.some(f => f.itemId === w.id) ? "bg-rose-500 text-white border-rose-500" : "bg-black/40 text-white hover:bg-rose-500"
-                    )}
-                  >
-                    <Heart className={cn("w-4 h-4", favorites.some(f => f.itemId === w.id) && "fill-current")} />
-                  </button>
-                </div>
-                {w.isPremium && (
-                  <div className="absolute top-3 right-3 bg-yellow-500 p-1.5 rounded-lg shadow-2xl">
-                    <Sparkles className="w-3 h-3 text-black" />
+          <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4">
+            {uniqueWallpapers.filter(w => w.category === 'ফিচার্ড').map((w, index) => (
+              <React.Fragment key={w.id}>
+                <WallpaperCard w={w} setSelectedWallpaper={setSelectedWallpaper} toggleFavorite={toggleFavorite} favorites={favorites} handleShare={handleShare} unlockedItems={profile?.unlockedItems} />
+                {(index + 1) % 6 === 0 && (
+                  <div className="break-inside-avoid mb-4">
+                    <GoogleAd type="in-feed" className="h-full min-h-[250px]" />
                   </div>
                 )}
-              </div>
+              </React.Fragment>
             ))}
           </div>
         </section>
@@ -1451,71 +1941,44 @@ export default function App() {
         {/* New Grid */}
         <section className="mb-16">
           <h2 className="text-2xl font-bold mb-8">নতুন আপলোড</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            {[...MOCK_WALLPAPERS, ...dbWallpapers].filter(w => w.category === 'নতুন' || w.category === 'User Uploads').map((w) => (
-              <div 
-                key={w.id} 
-                onClick={() => setSelectedWallpaper(w)}
-                className="aspect-[9/16] rounded-3xl overflow-hidden relative group cursor-pointer border border-white/5 shadow-xl"
-              >
-                <img src={w.url} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={w.title} referrerPolicy="no-referrer" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
-                  <p className="text-xs font-bold">{w.title}</p>
-                </div>
-                <div className="absolute top-3 left-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); toggleFavorite(w.id, 'wallpaper'); }}
-                    className={cn(
-                      "p-2 rounded-xl backdrop-blur-md border border-white/10 transition-all",
-                      favorites.some(f => f.itemId === w.id) ? "bg-rose-500 text-white border-rose-500" : "bg-black/40 text-white hover:bg-rose-500"
-                    )}
-                  >
-                    <Heart className={cn("w-4 h-4", favorites.some(f => f.itemId === w.id) && "fill-current")} />
-                  </button>
-                </div>
-                {w.isPremium && (
-                  <div className="absolute top-3 right-3 bg-yellow-500 p-1.5 rounded-lg">
-                    <Sparkles className="w-3 h-3 text-black" />
+          <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4">
+            {uniqueWallpapers.filter(w => w.category === 'নতুন' || w.category === 'User Uploads').map((w, index) => (
+              <React.Fragment key={w.id}>
+                <WallpaperCard w={w} setSelectedWallpaper={setSelectedWallpaper} toggleFavorite={toggleFavorite} favorites={favorites} handleShare={handleShare} unlockedItems={profile?.unlockedItems} />
+                {(index + 1) % 6 === 0 && (
+                  <div className="break-inside-avoid mb-4">
+                    <GoogleAd type="in-feed" className="h-full min-h-[250px]" />
                   </div>
                 )}
-              </div>
+              </React.Fragment>
             ))}
           </div>
         </section>
 
         {/* Popular Grid */}
         <section className="mb-16">
-          <h2 className="text-2xl font-bold mb-8">জনপ্রিয়</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            {[...MOCK_WALLPAPERS, ...dbWallpapers].filter(w => w.category === 'জনপ্রিয়').map((w) => (
-              <div 
-                key={w.id} 
-                onClick={() => setSelectedWallpaper(w)}
-                className="aspect-[9/16] rounded-3xl overflow-hidden relative group cursor-pointer border border-white/5 shadow-xl"
-              >
-                <img src={w.url} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={w.title} referrerPolicy="no-referrer" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
-                  <p className="text-xs font-bold">{w.title}</p>
-                </div>
-                <div className="absolute top-3 left-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); toggleFavorite(w.id, 'wallpaper'); }}
-                    className={cn(
-                      "p-2 rounded-xl backdrop-blur-md border border-white/10 transition-all",
-                      favorites.some(f => f.itemId === w.id) ? "bg-rose-500 text-white border-rose-500" : "bg-black/40 text-white hover:bg-rose-500"
-                    )}
-                  >
-                    <Heart className={cn("w-4 h-4", favorites.some(f => f.itemId === w.id) && "fill-current")} />
-                  </button>
-                </div>
-                {w.isPremium && (
-                  <div className="absolute top-3 right-3 bg-yellow-500 p-1.5 rounded-lg">
-                    <Sparkles className="w-3 h-3 text-black" />
+          <h2 className="text-2xl font-bold mb-8">জনপ্রিয় (Trending)</h2>
+          <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4">
+            {[...uniqueWallpapers].sort((a, b) => {
+              const scoreA = (a.views || 0) + (a.likes || 0) * 2 + (a.downloads || 0) * 5;
+              const scoreB = (b.views || 0) + (b.likes || 0) * 2 + (b.downloads || 0) * 5;
+              return scoreB - scoreA;
+            }).slice(0, visibleWallpapers).map((w, index) => (
+              <React.Fragment key={w.id}>
+                <WallpaperCard w={w} setSelectedWallpaper={setSelectedWallpaper} toggleFavorite={toggleFavorite} favorites={favorites} handleShare={handleShare} index={index} unlockedItems={profile?.unlockedItems} />
+                {(index + 1) % 6 === 0 && (
+                  <div className="break-inside-avoid mb-4">
+                    <GoogleAd type="in-feed" className="h-full min-h-[250px]" />
                   </div>
                 )}
-              </div>
+              </React.Fragment>
             ))}
           </div>
+          {visibleWallpapers < uniqueWallpapers.length && (
+            <div ref={loadMoreRef} className="h-20 flex items-center justify-center mt-8">
+              <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          )}
         </section>
 
         {/* Footer Ad */}
@@ -1528,6 +1991,42 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white font-sans selection:bg-purple-500/30">
+      {/* PWA Install Prompt */}
+      <AnimatePresence>
+        {showInstallPrompt && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-4 left-4 right-4 md:left-auto md:right-8 md:bottom-8 z-[150] bg-[#1A1A1A] border border-purple-500/30 p-4 rounded-2xl shadow-2xl flex items-center justify-between gap-4 max-w-sm"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-purple-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Download className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h4 className="font-bold text-sm">VibeWall অ্যাপ ইনস্টল করুন</h4>
+                <p className="text-xs text-gray-400">দ্রুত অ্যাক্সেসের জন্য হোম স্ক্রিনে যোগ করুন</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setShowInstallPrompt(false)}
+                className="p-2 text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={handleInstallClick}
+                className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors"
+              >
+                ইনস্টল
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Toast Container */}
       <div className="fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-[200] flex flex-col gap-2 pointer-events-none w-full max-w-xs px-4">
         <AnimatePresence>
@@ -1552,6 +2051,82 @@ export default function App() {
           ))}
         </AnimatePresence>
       </div>
+
+      {/* Download Ad Overlay */}
+      <AnimatePresence>
+        {isDownloadAdOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[150] bg-black/95 backdrop-blur-3xl flex items-center justify-center p-4"
+          >
+            <div className="bg-[#1A1A1A] rounded-[40px] p-8 max-w-md w-full border border-white/10 text-center relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-white/5">
+                <motion.div 
+                  initial={{ width: '0%' }}
+                  animate={{ width: '100%' }}
+                  transition={{ duration: 3, ease: 'linear' }}
+                  className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
+                />
+              </div>
+              <h3 className="text-2xl font-black mb-2">VibeWall Premium</h3>
+              <p className="text-gray-400 mb-8">আপনার ডাউনলোড {downloadCountdown} সেকেন্ডের মধ্যে শুরু হবে...</p>
+              
+              <GoogleAd type="sidebar" className="mb-8" />
+              
+              <p className="text-xs text-gray-500">VibeWall বিজ্ঞাপন নেটওয়ার্ক দ্বারা স্পনসর করা</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Downloading Progress Overlay */}
+      <AnimatePresence>
+        {isDownloading && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[400] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-6"
+          >
+            <div className="w-full max-w-md bg-[#1A1A1A] rounded-3xl border border-white/10 overflow-hidden shadow-2xl">
+              <div className="p-8 text-center">
+                <div className="w-20 h-20 bg-purple-500/20 rounded-full mx-auto mb-6 flex items-center justify-center relative">
+                  <svg className="w-full h-full absolute top-0 left-0 -rotate-90" viewBox="0 0 100 100">
+                    <circle 
+                      cx="50" cy="50" r="45" 
+                      fill="none" 
+                      stroke="rgba(255,255,255,0.1)" 
+                      strokeWidth="8"
+                    />
+                    <circle 
+                      cx="50" cy="50" r="45" 
+                      fill="none" 
+                      stroke="#A855F7" 
+                      strokeWidth="8"
+                      strokeDasharray={`${2 * Math.PI * 45}`}
+                      strokeDashoffset={`${2 * Math.PI * 45 * (1 - downloadProgress / 100)}`}
+                      className="transition-all duration-300 ease-out"
+                    />
+                  </svg>
+                  <Download className="w-8 h-8 text-purple-500 animate-bounce" />
+                </div>
+                <h3 className="text-2xl font-black mb-2">ডাউনলোড প্রস্তুত হচ্ছে...</h3>
+                <p className="text-gray-400 mb-8">দয়া করে অপেক্ষা করুন, আপনার ফাইল তৈরি করা হচ্ছে।</p>
+                
+                {/* Ad Placeholder */}
+                <div className="w-full h-[250px] bg-black rounded-2xl border border-white/5 flex items-center justify-center relative overflow-hidden">
+                  <div className="absolute top-2 right-2 bg-white/10 px-2 py-1 rounded text-[10px] font-bold text-gray-400 uppercase">
+                    Advertisement
+                  </div>
+                  <GoogleAd type="in-feed" className="w-full h-full" />
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Ad Overlay */}
       <AnimatePresence>
@@ -1724,6 +2299,13 @@ export default function App() {
                         আমার প্রোফাইল
                       </button>
                       <button 
+                        onClick={() => { shareToEarn(); setIsUserMenuOpen(false); }}
+                        className="w-full flex items-center gap-4 p-4 rounded-2xl text-sm font-bold hover:bg-white/5 transition-all text-left text-pink-400"
+                      >
+                        <Share2 className="w-5 h-5" />
+                        শেয়ার করে আয় করুন
+                      </button>
+                      <button 
                         onClick={() => { setIsSettingsModalOpen(true); setIsUserMenuOpen(false); }}
                         className="w-full flex items-center gap-4 p-4 rounded-2xl text-sm font-bold hover:bg-white/5 transition-all text-left"
                       >
@@ -1788,17 +2370,27 @@ export default function App() {
                       {tab === 'এআই জেনারেটর' && <Sparkles className="w-5 h-5" />}
                       {tab === 'রিংটোন' && <Music className="w-5 h-5" />}
                       {tab === 'আমার ভাইব' && <UserIcon className="w-5 h-5" />}
+                      {tab === 'অ্যাডমিন' && <Settings className="w-5 h-5" />}
                       {tab}
                     </button>
                   ))}
                   {user && (
-                    <button
-                      onClick={() => { setIsSettingsModalOpen(true); setIsMobileMenuOpen(false); }}
-                      className="flex items-center gap-4 p-4 rounded-2xl text-sm font-black uppercase tracking-widest bg-white/5 text-gray-400 transition-all"
-                    >
-                      <Settings className="w-5 h-5" />
-                      সেটিংস
-                    </button>
+                    <>
+                      <button
+                        onClick={() => { shareToEarn(); setIsMobileMenuOpen(false); }}
+                        className="flex items-center gap-4 p-4 rounded-2xl text-sm font-black uppercase tracking-widest bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-pink-400 transition-all border border-pink-500/20"
+                      >
+                        <Share2 className="w-5 h-5" />
+                        শেয়ার করে আয় করুন
+                      </button>
+                      <button
+                        onClick={() => { setIsSettingsModalOpen(true); setIsMobileMenuOpen(false); }}
+                        className="flex items-center gap-4 p-4 rounded-2xl text-sm font-black uppercase tracking-widest bg-white/5 text-gray-400 transition-all"
+                      >
+                        <Settings className="w-5 h-5" />
+                        সেটিংস
+                      </button>
+                    </>
                   )}
                 </div>
 
@@ -1897,68 +2489,150 @@ export default function App() {
             initial={{ opacity: 0, y: '100%' }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: '100%' }}
-            className="fixed inset-0 z-[100] bg-black"
+            className="fixed inset-0 z-[100] bg-[#0A0A0A] overflow-y-auto"
           >
-            <img 
-              src={selectedWallpaper.url} 
-              alt={selectedWallpaper.title} 
-              className="w-full h-full object-cover"
-              referrerPolicy="no-referrer"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
-            
             <button 
               onClick={() => setSelectedWallpaper(null)}
-              className="absolute top-6 left-6 p-3 bg-black/40 backdrop-blur-md rounded-full"
+              className="fixed top-6 left-6 p-4 bg-black/50 backdrop-blur-xl rounded-full z-50 hover:bg-white/20 transition-all border border-white/10"
             >
               <X className="w-6 h-6" />
             </button>
 
-            <div className="absolute bottom-10 left-6 right-6">
-              <h2 className="text-3xl font-bold mb-2">{selectedWallpaper.title}</h2>
-              <p className="text-gray-300 mb-8">{selectedWallpaper.category} সংগ্রহ</p>
-              
-            <div className="flex gap-4">
-              {(!selectedWallpaper.isPremium || unlockedItems.includes(selectedWallpaper.id)) ? (
-                <button 
-                  onClick={() => handleDownload(selectedWallpaper.url, `${selectedWallpaper.title}.jpg`)}
-                  className="flex-1 bg-white text-black py-4 rounded-2xl font-bold flex items-center justify-center gap-2"
-                >
-                  <Zap className="w-5 h-5" />
-                  ডাউনলোড করে সেট করুন
-                </button>
-              ) : (
-                <button 
-                  onClick={() => unlockItem(selectedWallpaper.id, 100)}
-                  className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-black py-4 rounded-2xl font-bold flex items-center justify-center gap-2"
-                >
-                  <Sparkles className="w-5 h-5" />
-                  ১০০ Z দিয়ে আনলক করুন
-                </button>
-              )}
-              <button 
-                onClick={() => toggleFavorite(selectedWallpaper.id, 'wallpaper')}
-                className={cn(
-                  "w-16 h-16 rounded-2xl flex items-center justify-center transition-all backdrop-blur-md border border-white/10",
-                  favorites.some(f => f.itemId === selectedWallpaper.id) ? "bg-rose-500 text-white border-rose-500" : "bg-white/10 text-white hover:bg-rose-500"
-                )}
-              >
-                <Heart className={cn("w-6 h-6", favorites.some(f => f.itemId === selectedWallpaper.id) && "fill-current")} />
-              </button>
-              <button 
-                onClick={() => shareToPinterest(window.location.href, selectedWallpaper.url, `VibeWall ওয়ালপেপার: ${selectedWallpaper.title}`)}
-                className="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center transition-all shadow-lg hover:bg-red-700"
-                title="Pinterest-এ পিন করুন"
-              >
-                <Share2 className="w-6 h-6 text-white" />
-              </button>
-              <button 
-                onClick={() => handleDownload(selectedWallpaper.url, `${selectedWallpaper.title}.jpg`)}
-                className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/10"
-              >
-                <Download className="w-6 h-6" />
-              </button>
+            <div className="max-w-7xl mx-auto min-h-screen flex flex-col lg:flex-row">
+              {/* Image Section */}
+              <div className="w-full lg:w-2/3 lg:h-screen lg:sticky top-0 bg-black flex items-center justify-center p-4 lg:p-12">
+                <img 
+                  src={selectedWallpaper.url} 
+                  alt={selectedWallpaper.title} 
+                  className="max-w-full max-h-[80vh] lg:max-h-full object-contain rounded-3xl shadow-2xl"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+
+              {/* Details Section */}
+              <div className="w-full lg:w-1/3 p-6 lg:p-12 flex flex-col gap-8 bg-[#111]">
+                <div>
+                  <h2 className="text-4xl font-black mb-4 leading-tight">{selectedWallpaper.title}</h2>
+                  <div className="flex items-center gap-4 mb-6">
+                    <span className="bg-white/10 px-4 py-2 rounded-xl text-sm font-bold text-gray-300">
+                      {selectedWallpaper.category}
+                    </span>
+                    {selectedWallpaper.isPremium && (
+                      <span className="bg-yellow-500/20 text-yellow-500 px-4 py-2 rounded-xl text-sm font-black flex items-center gap-1">
+                        <Sparkles className="w-4 h-4" /> PRO
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* Tags */}
+                  <div className="flex flex-wrap gap-2 mb-8">
+                    {(selectedWallpaper.tags || ['4K', 'HD', selectedWallpaper.category, 'Trending', 'Aesthetic']).map(tag => (
+                      <span key={tag} className="text-xs font-bold text-gray-500 bg-black px-3 py-1.5 rounded-lg border border-white/5">
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Stats */}
+                  <div className="grid grid-cols-3 gap-4 mb-8">
+                    <div className="bg-black p-4 rounded-2xl border border-white/5 text-center">
+                      <p className="text-gray-500 text-xs font-bold mb-1 uppercase tracking-wider">Views</p>
+                      <p className="font-black text-xl">{Math.floor(Math.random() * 10000) + 1000}</p>
+                    </div>
+                    <div className="bg-black p-4 rounded-2xl border border-white/5 text-center">
+                      <p className="text-gray-500 text-xs font-bold mb-1 uppercase tracking-wider">Likes</p>
+                      <p className="font-black text-xl">{Math.floor(Math.random() * 1000) + 100}</p>
+                    </div>
+                    <div className="bg-black p-4 rounded-2xl border border-white/5 text-center">
+                      <p className="text-gray-500 text-xs font-bold mb-1 uppercase tracking-wider">Downloads</p>
+                      <p className="font-black text-xl">{Math.floor(Math.random() * 5000) + 500}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex flex-col gap-4 mt-auto">
+                  {(!selectedWallpaper.isPremium || unlockedItems.includes(selectedWallpaper.id)) ? (
+                    <button 
+                      onClick={() => handleDownload(selectedWallpaper.url, `${selectedWallpaper.title}.jpg`)}
+                      className="w-full bg-white text-black py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 hover:bg-gray-200 transition-all shadow-xl shadow-white/10"
+                    >
+                      <Download className="w-6 h-6" />
+                      HD ডাউনলোড করুন
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={() => unlockItem(selectedWallpaper.id, 100)}
+                      className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-black py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 hover:opacity-90 transition-all shadow-xl shadow-yellow-500/20"
+                    >
+                      <Sparkles className="w-6 h-6" />
+                      ১০০ Z দিয়ে আনলক করুন
+                    </button>
+                  )}
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <button 
+                      onClick={() => toggleFavorite(selectedWallpaper.id, 'wallpaper')}
+                      className={cn(
+                        "py-4 rounded-2xl flex items-center justify-center transition-all border",
+                        favorites.some(f => f.itemId === selectedWallpaper.id) ? "bg-rose-500/20 text-rose-500 border-rose-500/30" : "bg-black text-gray-400 border-white/5 hover:bg-white/5"
+                      )}
+                    >
+                      <Heart className={cn("w-6 h-6", favorites.some(f => f.itemId === selectedWallpaper.id) && "fill-current")} />
+                    </button>
+                    <button 
+                      onClick={() => handleShare(`VibeWall ওয়ালপেপার: ${selectedWallpaper.title}`, "এই অসাধারণ ওয়ালপেপারটি দেখুন!", window.location.href)}
+                      className="py-4 bg-black border border-white/5 rounded-2xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/5 transition-all"
+                    >
+                      <Share2 className="w-6 h-6" />
+                    </button>
+                    <button 
+                      onClick={() => {
+                        const siteUrl = window.location.origin;
+                        const pinterestUrl = `https://www.pinterest.com/pin/create/button/?url=${encodeURIComponent(siteUrl)}&media=${encodeURIComponent(selectedWallpaper.url)}&description=${encodeURIComponent(`VibeWall ওয়ালপেপার: ${selectedWallpaper.title}`)}`;
+                        window.open(pinterestUrl, '_blank', 'width=600,height=600');
+                      }}
+                      className="py-4 bg-[#E60023] border border-[#E60023]/50 rounded-2xl flex items-center justify-center text-white hover:bg-[#c5001f] transition-all"
+                      title="Pinterest এ পিন করুন"
+                    >
+                      <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                        <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.162-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024 0 1.518.769 1.518 1.688 0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.165 1.775 2.165 2.128 0 3.768-2.245 3.768-5.487 0-2.861-2.063-4.869-5.008-4.869-3.41 0-5.409 2.562-5.409 5.199 0 1.033.394 2.143.889 2.741.099.12.112.225.085.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.401.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.951-7.252 4.182 0 7.431 2.981 7.431 6.966 0 4.156-2.618 7.501-6.258 7.501-1.221 0-2.37-.634-2.762-1.386l-.752 2.872c-.272 1.043-1.011 2.345-1.506 3.141 1.185.363 2.443.559 3.738.559 6.627 0 11.989-5.365 11.989-11.988C24 5.367 18.644 0 12.017 0z"/>
+                      </svg>
+                    </button>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(window.location.href);
+                        showToast("লিঙ্ক কপি করা হয়েছে!", "success");
+                      }}
+                      className="py-4 bg-black border border-white/5 rounded-2xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/5 transition-all"
+                      title="লিঙ্ক কপি করুন"
+                    >
+                      <Copy className="w-6 h-6" />
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
+
+            {/* Related Wallpapers */}
+            <div className="max-w-7xl mx-auto p-6 lg:p-12 border-t border-white/5">
+              <h3 className="text-2xl font-black mb-8">সম্পর্কিত ওয়ালপেপার</h3>
+              <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4">
+                {uniqueWallpapers
+                  .filter(w => w.category === selectedWallpaper.category && w.id !== selectedWallpaper.id)
+                  .slice(0, 10)
+                  .map((w) => (
+                    <WallpaperCard 
+                      key={w.id} 
+                      w={w} 
+                      setSelectedWallpaper={setSelectedWallpaper} 
+                      toggleFavorite={toggleFavorite} 
+                      favorites={favorites} 
+                      handleShare={handleShare}
+                      unlockedItems={profile?.unlockedItems}
+                    />
+                ))}
+              </div>
             </div>
           </motion.div>
         )}
